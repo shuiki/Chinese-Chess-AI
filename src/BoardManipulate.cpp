@@ -23,9 +23,15 @@ void Board::addPiece(int_8 pos, int_8 piece)
 	chessView[piece] = pos;
 	dwBitPiece ^= BIT_PIECE(pos);
 	if (checkSide(piece, RED))
+	{
+		valueRed += PreEval.ucvlWhitePieces[PieceType[piece]][pos];
 		zobr.XOR(Zobrist.Table[PieceType[piece]][pos]);
+	}
 	else
+	{
+		valueBlack += PreEval.ucvlBlackPieces[PieceType[piece]][254-pos];
 		zobr.XOR(Zobrist.Table[PieceType[piece]+7][pos]);
+	}
 
 }
 
@@ -36,9 +42,15 @@ void Board::delPiece(int_8 pos)
 	chessBoard[pos] = 0;
 	dwBitPiece ^= BIT_PIECE(pos);
 	if (checkSide(pc, RED))
+	{
+		valueRed -= PreEval.ucvlWhitePieces[PieceType[pc]][pos];
 		zobr.XOR(Zobrist.Table[PieceType[pc]][pos]);
+	}
 	else
+	{
+		valueBlack += PreEval.ucvlBlackPieces[PieceType[pc]][254-pos];
 		zobr.XOR(Zobrist.Table[PieceType[pc] + 7][pos]);
+	}
 }
 
 void Board::changeSide() 
