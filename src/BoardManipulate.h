@@ -4,21 +4,21 @@
 #include<algorithm>
 #include<iostream>
 
-//ÆåÅÌ²Ù×÷
+//æ£‹ç›˜æ“ä½œ
 
-//Êı¾İ±íÊ¾·¨£º16x16ÆåÅÌ£¬Ê¹ÓÃ9x10µÄ²¿·Ö£¨ºá3~11£¬×İ3~12£©
-typedef unsigned char int_8;//ÓÃÀ´±íÊ¾Æå×Ó¡¢Î»ÖÃ
-typedef unsigned int int_32;//ÓÃÀ´±íÊ¾Ğ£ÑéÂëµÈ
-typedef unsigned short int_16;//ÓÃÀ´±íÊ¾move£¨Æğµã+ÖÕµã£©
+//æ•°æ®è¡¨ç¤ºæ³•ï¼š16x16æ£‹ç›˜ï¼Œä½¿ç”¨9x10çš„éƒ¨åˆ†ï¼ˆæ¨ª3~11ï¼Œçºµ3~12ï¼‰
+typedef unsigned char int_8;//ç”¨æ¥è¡¨ç¤ºæ£‹å­ã€ä½ç½®
+typedef unsigned int int_32;//ç”¨æ¥è¡¨ç¤ºæ ¡éªŒç ç­‰
+typedef unsigned short int_16;//ç”¨æ¥è¡¨ç¤ºmoveï¼ˆèµ·ç‚¹+ç»ˆç‚¹ï¼‰
 
 enum Player {BLACK,RED,NUL};
 
 const int MAX_MOV_NUM = 256;
 const int MAX_GEN_MVS = 256;
 
-/////ÔİÈ¡
-const int MATE_VALUE = 10000;           // ×î¸ß·ÖÖµ£¬¼´½«ËÀµÄ·ÖÖµ
-const int WIN_VALUE = MATE_VALUE - 100; // ËÑË÷³öÊ¤¸ºµÄ·ÖÖµ½çÏŞ£¬³¬³ö´ËÖµ¾ÍËµÃ÷ÒÑ¾­ËÑË÷³öÉ±ÆåÁË
+/////æš‚å–
+const int MATE_VALUE = 10000;           // æœ€é«˜åˆ†å€¼ï¼Œå³å°†æ­»çš„åˆ†å€¼
+const int WIN_VALUE = MATE_VALUE - 100; // æœç´¢å‡ºèƒœè´Ÿçš„åˆ†å€¼ç•Œé™ï¼Œè¶…å‡ºæ­¤å€¼å°±è¯´æ˜å·²ç»æœç´¢å‡ºæ€æ£‹äº†
 
 
 const int KING_TYPE = 0;
@@ -30,25 +30,25 @@ const int CANNON_TYPE = 5;
 const int PAWN_TYPE = 6;
 
 const int KING_FROM = 0;
-const int KING_TO = 0;//½«¡¢Ë§
-const int ADVISOR_FROM = 1;//Ê¿¡¢ÊË
+const int KING_TO = 0;//å°†ã€å¸…
+const int ADVISOR_FROM = 1;//å£«ã€ä»•
 const int ADVISOR_TO = 2;
-const int BISHOP_FROM = 3;//Ïà¡¢Ïó
+const int BISHOP_FROM = 3;//ç›¸ã€è±¡
 const int BISHOP_TO = 4;
 const int KNIGHT_FROM = 5;
-const int KNIGHT_TO = 6;//Âí
+const int KNIGHT_TO = 6;//é©¬
 const int ROOK_FROM = 7;
-const int ROOK_TO = 8;//³µ
+const int ROOK_TO = 8;//è½¦
 const int CANNON_FROM = 9;
 const int CANNON_TO = 10;
 const int PAWN_FROM = 11;
 const int PAWN_TO = 15;
 
-const int RED_INDEX = 16;//ºì·½×Ó´Ó16¿ªÊ¼
-const int BLACK_INDEX = 32;//ºÚ·½×Ó´Ó32¿ªÊ¼ 
+const int RED_INDEX = 16;//çº¢æ–¹å­ä»16å¼€å§‹
+const int BLACK_INDEX = 32;//é»‘æ–¹å­ä»32å¼€å§‹ 
 
 
-const int LegalSpan[100] = {//±êÖ¾½«17¡¢Ê¿18¡¢Ïà19¡¢ÂíµÄ¿ÉĞĞĞÔ
+const int LegalSpan[100] = {//æ ‡å¿—å°†17ã€å£«18ã€ç›¸19ã€é©¬çš„å¯è¡Œæ€§
 	0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,
@@ -72,7 +72,7 @@ const int ADVISOR_DELTA[4] = { -17,17,-15,15 };
 const int BISHOP_DELTA[4] = { -34,34,-30,30 };
 const int KNIGHT_DELTA[8] = { -33, -31, -18, 14, -14, 18, 31, 33 };
 
-class RC4 {//Éú³ÉÓÃÓÚzobristĞ£ÑéµÄËæ»úÂë
+class RC4 {//ç”Ÿæˆç”¨äºzobristæ ¡éªŒçš„éšæœºç 
 public:
 	int_8 s[256];
 	int x, y;
@@ -117,7 +117,7 @@ RC4 rander;
 
 class ZobristNode {
 public:
-	int_32 key, lock_1, lock_2;//zobristĞ£ÑéÂëºÍĞ£ÑéËø
+	int_32 key, lock_1, lock_2;//zobristæ ¡éªŒç å’Œæ ¡éªŒé”
 	void init() { key = 0; lock_1 = 0; lock_2 = 0; }
 	void initWithRC4(RC4 src) { key = src.NextLong(); lock_1 = src.NextLong(); lock_2 = src.NextLong(); }
 	void XOR(ZobristNode a) { key = key ^ a.key; lock_1 = lock_1 ^ a.lock_1; lock_2 = lock_2 ^ a.lock_2; }
@@ -125,7 +125,7 @@ public:
 
 struct ZobristTable {
 	ZobristNode PlayerZobr;
-	ZobristNode Table[14][256];//Ã¿¸ö¸ñ×Ó¶ÔÓ¦µÄÃ¿ÖÖ×´Ì¬µÄzobristĞ£ÑéÖµ
+	ZobristNode Table[14][256];//æ¯ä¸ªæ ¼å­å¯¹åº”çš„æ¯ç§çŠ¶æ€çš„zobristæ ¡éªŒå€¼
 };
 
 ZobristTable Zobrist;
@@ -141,32 +141,48 @@ struct MoveStruct {
 
 class Board {
 public:
-	int_8 chessBoard[256];//ÆåÅÌ×´Ì¬
-	int_8 chessView[48];//Ã¿¸ö×ÓµÄ×´Ì¬
-	Player player;//Íæ¼Ò
-	MoveStruct pastMoves[MAX_MOV_NUM];//ÉÏ´Î³Ô×ÓÒÔÀ´µÄÀúÊ·×ß·¨,¿ÉÓÃÀ´ÅĞ¶ÏÖØ¸´
-	int distance;//Óë¸ù½ÚµãµÄ¾àÀë
-	int pastMoveNum;//ÀúÊ·×ß·¨³¤¶È
-	int chessNum;//Ê£ÓàÆå×ÓÊı
-	ZobristNode zobr;//ÖÃ»»±íĞ£Ñé
-	bool checked;//µ±Ç°±»½«¾ü±êÖ¾
+	int_8 chessBoard[256];//æ£‹ç›˜çŠ¶æ€
+	int_8 chessView[48];//æ¯ä¸ªå­çš„çŠ¶æ€
+	Player player;//ç©å®¶
+	MoveStruct pastMoves[MAX_MOV_NUM];//ä¸Šæ¬¡åƒå­ä»¥æ¥çš„å†å²èµ°æ³•,å¯ç”¨æ¥åˆ¤æ–­é‡å¤
+	int distance;//ä¸æ ¹èŠ‚ç‚¹çš„è·ç¦»
+	int pastMoveNum;//å†å²èµ°æ³•é•¿åº¦
+	int chessNum;//å‰©ä½™æ£‹å­æ•°
+	ZobristNode zobr;//ç½®æ¢è¡¨æ ¡éªŒ
+	bool checked;//å½“å‰è¢«å°†å†›æ ‡å¿—
+	int valueRed,valueBlack; // é»‘æ£‹å’Œçº¢æ£‹çš„å­åŠ›ä»·å€¼
 	Board();
-	void refreshBoard(const char* fen, const char* moves, char side);//¸ù¾İucci´®¸üĞÂÆåÅÌ
-	bool isLegalMove(int_16 mv);//ÅĞ¶ÏÒ»²½ÆåÊÇ·ñºÏ·¨
-	bool isChecked(Player player);//ÅĞ¶ÏÄ³Íæ¼ÒÊÇ·ñ±»½«¾ü
-	int_8 makeMove(int_16 mv);//×ßÒ»²½Æå£¬·µ»Ø±»³ÔµôµÄ×Ó
-	void undoMakeMove();//³·ÏúÉÏÒ»²½Æå
-	int genMoves(int_16* mvs,bool captureOnly=false);//Éú³É×ß·¨£¬·µ»Ø×ß·¨Êı
+	void refreshBoard(const char* fen, const char* moves, char side);//æ ¹æ®ucciä¸²æ›´æ–°æ£‹ç›˜
+	bool isLegalMove(int_16 mv);//åˆ¤æ–­ä¸€æ­¥æ£‹æ˜¯å¦åˆæ³•
+	bool isChecked(Player player);//åˆ¤æ–­æŸç©å®¶æ˜¯å¦è¢«å°†å†›
+	int_8 makeMove(int_16 mv);//èµ°ä¸€æ­¥æ£‹ï¼Œè¿”å›è¢«åƒæ‰çš„å­
+	void undoMakeMove();//æ’¤é”€ä¸Šä¸€æ­¥æ£‹
+	int genMoves(int_16* mvs,bool captureOnly=false);//ç”Ÿæˆèµ°æ³•ï¼Œè¿”å›èµ°æ³•æ•°
 	void clearBoard();
 	void clearMoves();
 	void drawBoard();
+	
+	// è¯„ä¼°æœ‰å…³å‡½æ•°
+	void PreEvaluate(void);
+	int Material(void)
+	{
+	    	return SIDE_VALUE(sdPlayer,valueRed-valueBlack)+PreEval.valueAdvanced;
+	}
+
+        int Evaluate(void)
+	{
+		// åªè€ƒè™‘å­åŠ›å¹³è¡¡ï¼Œä¸è€ƒè™‘ç‰¹æ®Šæ£‹å½¢ã€ç‰µåˆ¶ã€è½¦çš„çµæ´»æ€§ã€é©¬çš„é˜»ç¢
+		return this->Material();
+        }	
+		
+		
 private:
 	void addPiece(int_8 pos,int_8 piece);
 	void delPiece(int_8 pos);
 	void changeSide();
 };
 
-////////Ïà¹Ø¹¤¾ßº¯Êı///////////
+////////ç›¸å…³å·¥å…·å‡½æ•°///////////
 inline int coordXY(int x, int y)
 {
 	return x + (y << 4);
@@ -182,12 +198,12 @@ inline int getY(int pos)
 	return pos >> 4;
 }
 
-inline bool inBoard(int pos)//Î»ÓÚÆåÅÌÖĞ
+inline bool inBoard(int pos)//ä½äºæ£‹ç›˜ä¸­
 {
 	return (pos >= 51) && (pos <= 203);
 }
 
-inline bool inBox(int pos,Player player)//Î»ÓÚÄ³·½µÄĞ¡¾Å¹¬¸ñÖĞ
+inline bool inBox(int pos,Player player)//ä½äºæŸæ–¹çš„å°ä¹å®«æ ¼ä¸­
 {
 	switch (player) {
 	case(BLACK):
@@ -197,12 +213,12 @@ inline bool inBox(int pos,Player player)//Î»ÓÚÄ³·½µÄĞ¡¾Å¹¬¸ñÖĞ
 	}
 }
 
-inline int_8 getDST(int_16 mv)//Ò»²½µÄÖÕµã
+inline int_8 getDST(int_16 mv)//ä¸€æ­¥çš„ç»ˆç‚¹
 {
 	return mv >> 8;
 }
 
-inline int_8 getSRC(int_16 mv)//Ò»²½µÄÆğµã
+inline int_8 getSRC(int_16 mv)//ä¸€æ­¥çš„èµ·ç‚¹
 {
 	return mv & 255;
 }
@@ -282,7 +298,7 @@ inline bool sameY(int_8 src, int_8 dst)
 
 inline int_8 charToChessType(char c)
 {
-	c = (c >= 'a') ? c : 'a' + c - 'A';//×ª»¯ÎªĞ¡Ğ´
+	c = (c >= 'a') ? c : 'a' + c - 'A';//è½¬åŒ–ä¸ºå°å†™
 	switch (c) {
 	case('k'):
 		return KING_TYPE;
