@@ -34,6 +34,7 @@ void Board::delPiece(int_8 pos)
 	int_8 pc = chessBoard[pos];
 	chessView[pc] = 0;
 	chessBoard[pos] = 0;
+	dwBitPiece ^= BIT_PIECE(pos);
 	if (checkSide(pc, RED))
 		zobr.XOR(Zobrist.Table[PieceType[pc]][pos]);
 	else
