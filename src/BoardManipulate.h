@@ -3,6 +3,7 @@
 #define BOARD_MANIPULATE
 #include<algorithm>
 #include<iostream>
+#include "tools.h"
 
 //棋盘操作
 
@@ -137,7 +138,14 @@ struct MoveStruct {
 	ZobristNode zobr;
 };
 
+struct PreEvalStruct{
+    bool bPromotion;           // 这个不知道哎,是否升变，不考虑，当成不升变
+    int valueAdvanced;         // 开中残局分值，二次函数
+    uint8_t ucvlWhitePieces[7][256];        // 要改成Red，不同棋子不同位置分值，会根据棋局改变
+    uint8_t ucvlBlackPieces[7][256];
+};
 
+PreEvalStruct PreEval;
 
 class Board {
 public:
@@ -166,7 +174,7 @@ public:
 	void PreEvaluate(void);
 	int Material(void)
 	{
-	    	return SIDE_VALUE(sdPlayer,valueRed-valueBlack)+PreEval.valueAdvanced;
+	    	return SIDE_VALUE(player,valueRed-valueBlack)+PreEval.valueAdvanced;
 	}
 
         int Evaluate(void)
