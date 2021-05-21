@@ -8,6 +8,7 @@ Board::Board()
 	memset(chessView, 0, sizeof(int_8)*48);
 	player = RED;
 	valueRed = valueBlack = 0;
+	dwBitPiece = 0;
 	memset(pastMoves, 0, sizeof(int_8) * MAX_MOV_NUM);
 	pastMoveNum = 0;
 	distance = 0;
@@ -20,6 +21,7 @@ void Board::addPiece(int_8 pos, int_8 piece)
 {
 	chessBoard[pos] = piece;
 	chessView[piece] = pos;
+	dwBitPiece ^= BIT_PIECE(pos);
 	if (checkSide(piece, RED))
 		zobr.XOR(Zobrist.Table[PieceType[piece]][pos]);
 	else
