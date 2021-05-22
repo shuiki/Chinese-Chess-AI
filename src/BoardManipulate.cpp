@@ -271,8 +271,35 @@ void Board::clearBoard()
 	memset(pastMoves, 0, sizeof(int_8) * MAX_MOV_NUM);
 	chessNum = 0;
 	distance = 0;
+	dwBitPiece = 0;
 	zobr.init();
 	clearMoves();
+}
+
+int Board::RepStatus(int limit) const {
+	bool selfSide, bPerpCheck, bOppPerpCheck;
+	const MoveStruct* tMv;
+
+	selfSide = false;
+	bPerpCheck = bOppPerpCheck = true;	// 长将标记
+	tMv = pastMoves + pastMoveNum - 1;	// 指向历史表中最后节点
+	while (tMv->move != 0 && tMv->captured == 0) {
+		if (selfSide) {
+			bPerpCheck = bPerpCheck && tMv->checked;
+			if (tMv->zobr.key == zobr.key) {
+				limit--;
+				if (limit == 0) {
+					return 1 + (bPerpCheck ? 2 : 0) + (bOppPerpCheck ? 4 : 0);
+				}
+			}
+		}
+		else {
+			bOppPerpCheck = bOppPerpCheck && tMv->checked;
+		}
+		selfSide = !selfSide;
+		tMv--;
+	}
+	return 0;
 }
 
 void Board::clearMoves()

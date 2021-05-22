@@ -151,6 +151,7 @@ class Board {
 public:
 	int_8 chessBoard[256];//棋盘状态
 	int_8 chessView[48];//每个子的状态
+	int_32 dwBitPiece;
 	Player player;//玩家
 	MoveStruct pastMoves[MAX_MOV_NUM];//上次吃子以来的历史走法,可用来判断重复
 	int distance;//与根节点的距离
@@ -169,7 +170,13 @@ public:
 	void clearBoard();
 	void clearMoves();
 	void drawBoard();
-	
+	int RepStatus(int limit)const;
+	/*判断重复情况：　
+		A. 返回0，表示没有重复局面；
+		B.返回1，表示存在重复局面，但双方都无长将(判和)；
+		C.返回3(= 1 + 2)，表示存在重复局面，本方单方面长将(判本方负)；
+		D.返回5(= 1 + 4)，表示存在重复局面，对方单方面长将(判对方负)；
+		E.返回7(= 1 + 2 + 4)，表示存在重复局面，双方长将(判和)。*/
 	// 评估有关函数
 	void PreEvaluate(void);
 	int Material(void)
