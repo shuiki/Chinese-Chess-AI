@@ -345,4 +345,16 @@ inline Player rival(Player player)
 	return (Player)(1 - (int)player);
 }
 
+inline int_32 MOVE_COORD(int mv) {      // 把着法转换成字符串
+	union {
+		char c[4];
+		int_32 dw;
+	} Ret;
+	Ret.c[0] = FILE_X(getSRC(mv)) - 3 + 'a';
+	Ret.c[1] = '9' - RANK_Y(getSRC(mv)) + 3;
+	Ret.c[2] = FILE_X(getDST(mv)) - 3 + 'a';
+	Ret.c[3] = '9' - RANK_Y(getDST(mv)) + 3;
+	return Ret.dw;
+}
+
 #endif
