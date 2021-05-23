@@ -57,14 +57,37 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		{
 			int value = -SearchPV(depth - 1, -beta, -alpha);
 			searchInfo.board.undoMakeMove();
-			if (value > beta)
-				return beta;
+			if (value > beta) {
+				mvBest = mv;
+				nHashFlag = HASH_BETA;
+				break;
+			}
+				
 			if (value > alpha)
-				alpha = value;
+			{
+				mvBest = mv;
+				nHashFlag = HASH_PV;
+				break;
+			}
+		}
+		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+		if (nCurrTimer > searchInfo.nMaxTimer) {
+			searchInfo.bStop = true;
 		}
 	}
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
+	// 11. 更新置换表、历史表和杀手着法表。
+	if (vlBest == -MATE_VALUE) {
+		return searchInfo.board.distance - MATE_VALUE;
+	}
+	else {
+		recordHash(searchInfo.board, nHashFlag, vlBest, depth, mvBest);
+		if (mvBest != 0) {
+			searchInfo.SetBestMove(mvBest, depth, searchInfo.wmvKiller[searchInfo.board.distance]);
+		}
+		return vlBest;
+	}
 	return alpha;
 }
 int SearchRoot(int depth) {
