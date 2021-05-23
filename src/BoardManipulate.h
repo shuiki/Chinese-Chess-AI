@@ -152,6 +152,7 @@ public:
 	int_8 chessBoard[256];//棋盘状态
 	int_8 chessView[48];//每个子的状态
 	int_32 dwBitPiece;
+	int_16 wBitPiece[2];
 	Player player;//玩家
 	MoveStruct pastMoves[MAX_MOV_NUM];//上次吃子以来的历史走法,可用来判断重复
 	int distance;//与根节点的距离
