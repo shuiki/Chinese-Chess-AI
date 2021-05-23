@@ -136,6 +136,12 @@ struct MoveStruct {
 	int_8 captured;
 	bool checked;
 	ZobristNode zobr;
+	void Set(int mv, int pcCaptured, bool bCheck, uint32_t dwKey_) {
+		move = mv;
+		captured = pcCaptured;
+		checked = bCheck;
+		zobr.key = dwKey_;
+	}
 };
 
 struct PreEvalStruct{
@@ -152,7 +158,6 @@ public:
 	int_8 chessBoard[256];//棋盘状态
 	int_8 chessView[48];//每个子的状态
 	int_32 dwBitPiece;
-	int_16 wBitPiece[2];
 	Player player;//玩家
 	MoveStruct pastMoves[MAX_MOV_NUM];//上次吃子以来的历史走法,可用来判断重复
 	int distance;//与根节点的距离
@@ -167,6 +172,14 @@ public:
 	bool isChecked(Player player);//判断某玩家是否被将军
 	int_8 makeMove(int_16 mv);//走一步棋，返回被吃掉的子
 	void undoMakeMove();//撤销上一步棋
+	void NullMove(void) {                       // 走一步空步
+		uint32_t dwKey;
+		dwKey = zobr.key;
+		changeSide();
+		pastMoves[pastMoveNum].Set(0, 0, false, dwKey);
+		pastMoveNum++;
+		distance++;
+	}
 	int genMoves(int_16* mvs,bool captureOnly=false);//生成走法，返回走法数
 	void clearBoard();
 	void clearMoves();
@@ -344,18 +357,6 @@ inline int_8 charToPos(char a, char b)
 inline Player rival(Player player)
 {
 	return (Player)(1 - (int)player);
-}
-
-inline int_32 MOVE_COORD(int mv) {      // 把着法转换成字符串
-	union {
-		char c[4];
-		int_32 dw;
-	} Ret;
-	Ret.c[0] = FILE_X(getSRC(mv)) - 3 + 'a';
-	Ret.c[1] = '9' - RANK_Y(getSRC(mv)) + 3;
-	Ret.c[2] = FILE_X(getDST(mv)) - 3 + 'a';
-	Ret.c[3] = '9' - RANK_Y(getDST(mv)) + 3;
-	return Ret.dw;
 }
 
 #endif

@@ -488,8 +488,8 @@ void Board::drawBoard()
 }
 
 //rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR
-/*
-int main()//棋盘操作测试
+//h2e2 h9g7
+int main()
 {
 	Board myboard;
 	myboard.refreshBoard("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR\0","\0",'r');
@@ -514,7 +514,7 @@ int main()//棋盘操作测试
 		{
 			printf("%d\n", myboard.genMoves(mvs,true));
 		}
-		else
+		else 
 		{
 			src = charToPos(c[0], c[1]);
 			dst = charToPos(c[2], c[3]);
@@ -532,6 +532,5 @@ int main()//棋盘操作测试
 	system("pause");
 	return 0;
 }
-*/
 
 //h2e2 h9g7
