@@ -9,6 +9,7 @@ Board::Board()
 	player = RED;
 	valueRed = valueBlack = 0;
 	dwBitPiece = 0;
+	wBitPiece[0] = wBitPiece[1] = 0;
 	memset(pastMoves, 0, sizeof(int_8) * MAX_MOV_NUM);
 	pastMoveNum = 0;
 	distance = 0;
@@ -21,16 +22,18 @@ void Board::addPiece(int_8 pos, int_8 piece)
 {
 	chessBoard[pos] = piece;
 	chessView[piece] = pos;
-	dwBitPiece ^= BIT_PIECE(pos);
+	dwBitPiece ^= BIT_PIECE(piece);
 	if (checkSide(piece, RED))
 	{
 		valueRed += PreEval.ucvlWhitePieces[PieceType[piece]][pos];
 		zobr.XOR(Zobrist.Table[PieceType[piece]][pos]);
+		wBitPiece[0] ^= BIT_PIECE(piece);
 	}
 	else
 	{
 		valueBlack += PreEval.ucvlBlackPieces[PieceType[piece]][254-pos];
 		zobr.XOR(Zobrist.Table[PieceType[piece]+7][pos]);
+		wBitPiece[1] ^= BIT_PIECE(piece-16);
 	}
 
 }
@@ -40,16 +43,18 @@ void Board::delPiece(int_8 pos)
 	int_8 pc = chessBoard[pos];
 	chessView[pc] = 0;
 	chessBoard[pos] = 0;
-	dwBitPiece ^= BIT_PIECE(pos);
+	dwBitPiece ^= BIT_PIECE(pc);
 	if (checkSide(pc, RED))
 	{
 		valueRed -= PreEval.ucvlWhitePieces[PieceType[pc]][pos];
 		zobr.XOR(Zobrist.Table[PieceType[pc]][pos]);
+		wBitPiece[0] ^= BIT_PIECE(pc);
 	}
 	else
 	{
 		valueBlack += PreEval.ucvlBlackPieces[PieceType[pc]][254-pos];
 		zobr.XOR(Zobrist.Table[PieceType[pc] + 7][pos]);
+		wBitPiece[1] ^= BIT_PIECE(pc-16);
 	}
 }
 
