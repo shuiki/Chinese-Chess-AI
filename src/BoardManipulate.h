@@ -145,9 +145,9 @@ struct MoveStruct {
 };
 
 struct PreEvalStruct{
-    bool bPromotion;           // 这个不知道哎,是否升变，不考虑，当成不升变
+    bool bPromotion;           
     int valueAdvanced;         // 开中残局分值，二次函数
-    uint8_t ucvlWhitePieces[7][256];        // 要改成Red，不同棋子不同位置分值，会根据棋局改变
+    uint8_t ucvlWhitePieces[7][256];
     uint8_t ucvlBlackPieces[7][256];
 };
 
@@ -157,7 +157,8 @@ class Board {
 public:
 	int_8 chessBoard[256];//棋盘状态
 	int_8 chessView[48];//每个子的状态
-	int_32 dwBitPiece;
+	uint32_t dwBitPiece;
+	uint16_t wBitPiece[2];
 	Player player;//玩家
 	MoveStruct pastMoves[MAX_MOV_NUM];//上次吃子以来的历史走法,可用来判断重复
 	int distance;//与根节点的距离
