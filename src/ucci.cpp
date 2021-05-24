@@ -76,7 +76,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 			UcciComm.position.player = 'r';
 			int i;
-			for (i = 0; i < *(UcciComm.position.Fen + i) != ' '; i++) {
+			for (i = 0;  *(UcciComm.position.Fen + i) != ' '; i++) {
 				if (*(UcciComm.position.Fen + i) != ' ') {
 					UcciComm.position.pos [i] = *(UcciComm.position.Fen + i);
 				}
