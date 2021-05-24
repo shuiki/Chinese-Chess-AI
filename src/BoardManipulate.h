@@ -1,4 +1,4 @@
-#pragma once
+
 #pragma once
 #ifndef BOARD_MANIPULATE
 #define BOARD_MANIPULATE
@@ -7,7 +7,6 @@
 #include "tools.h"
 
 //棋盘操作
-
 //数据表示法：16x16棋盘，使用9x10的部分（横3~11，纵3~12）
 typedef unsigned char int_8;//用来表示棋子、位置
 typedef unsigned int int_32;//用来表示校验码等

@@ -8,8 +8,8 @@ PreEvalStruct PreEval;
 
 Board::Board()
 {
-	memset(chessBoard,0,sizeof(int_8)*256);
-	memset(chessView, 0, sizeof(int_8)*48);
+	memset(chessBoard, 0, sizeof(int_8) * 256);
+	memset(chessView, 0, sizeof(int_8) * 48);
 	player = RED;
 	valueRed = valueBlack = 0;
 	dwBitPiece = 0;
@@ -35,9 +35,9 @@ void Board::addPiece(int_8 pos, int_8 piece)
 	}
 	else
 	{
-		valueBlack += PreEval.ucvlBlackPieces[PieceType[piece]][254-pos];
-		zobr.XOR(Zobrist.Table[PieceType[piece]+7][pos]);
-		wBitPiece[1] ^= BIT_PIECE(piece-16);
+		valueBlack += PreEval.ucvlBlackPieces[PieceType[piece]][254 - pos];
+		zobr.XOR(Zobrist.Table[PieceType[piece] + 7][pos]);
+		wBitPiece[1] ^= BIT_PIECE(piece - 16);
 	}
 
 }
@@ -56,19 +56,19 @@ void Board::delPiece(int_8 pos)
 	}
 	else
 	{
-		valueBlack += PreEval.ucvlBlackPieces[PieceType[pc]][254-pos];
+		valueBlack += PreEval.ucvlBlackPieces[PieceType[pc]][254 - pos];
 		zobr.XOR(Zobrist.Table[PieceType[pc] + 7][pos]);
-		wBitPiece[1] ^= BIT_PIECE(pc-16);
+		wBitPiece[1] ^= BIT_PIECE(pc - 16);
 	}
 }
 
-void Board::changeSide() 
+void Board::changeSide()
 {
 	player = (Player)(1 - (int)player);
 	zobr.XOR(Zobrist.PlayerZobr);
 }
 
-int_8 Board::makeMove(int_16 mv)//èµ°ä¸€æ­¥æ£‹ï¼Œè¿”å›è¢«åƒæ‰çš„å­
+int_8 Board::makeMove(int_16 mv)//×ßÒ»²½Æå£¬·µ»Ø±»³ÔµôµÄ×Ó
 {
 	int_8 src = getSRC(mv);
 	int_8 dst = getDST(mv);
@@ -86,7 +86,7 @@ int_8 Board::makeMove(int_16 mv)//èµ°ä¸€æ­¥æ£‹ï¼Œè¿”å›è¢«åƒæ‰çš„å­
 	return dp;
 }
 
-void Board::undoMakeMove()//æ’¤é”€ä¸€æ­¥æ£‹ï¼Œå‚æ•°æ˜¯è¢«åƒæ‰çš„æ£‹å­
+void Board::undoMakeMove()//³·ÏúÒ»²½Æå£¬²ÎÊıÊÇ±»³ÔµôµÄÆå×Ó
 {
 	int_16 mv = pastMoves[pastMoveNum - 1].move;
 	int_8 dp = pastMoves[pastMoveNum - 1].captured;
@@ -105,17 +105,17 @@ void Board::undoMakeMove()//æ’¤é”€ä¸€æ­¥æ£‹ï¼Œå‚æ•°æ˜¯è¢«åƒæ‰çš„æ£‹å­
 }
 
 
-void Board::refreshBoard(const char* fen, const char* moves,int movNum, char side)//æ ¹æ®ucciä¸²æ›´æ–°æ£‹ç›˜
+void Board::refreshBoard(const char* fen, const char* moves, int movNum, char side)//¸ù¾İucci´®¸üĞÂÆåÅÌ
 {
 	clearBoard();
-	int_8 boardPos = 51,strPos=0;
+	int_8 boardPos = 51, strPos = 0;
 	int_8 blacks[7] = { 32,33,35,37,39,41,43 };
 	int_8 reds[7] = { 16,17,19,21,23,25,27 };
 	if (side == 'r')
 		player = RED;
 	else if (side == 'b')
 		player = BLACK;
-	while (fen[strPos] != '\0')//åœ¨æ£‹ç›˜ä¸­å¡«å…¥fenä¸²ä¸­çš„å†…å®¹
+	while (fen[strPos] != '\0')//ÔÚÆåÅÌÖĞÌîÈëfen´®ÖĞµÄÄÚÈİ
 	{
 		char c = fen[strPos];
 		int_8 curPiece = 0;
@@ -125,7 +125,7 @@ void Board::refreshBoard(const char* fen, const char* moves,int movNum, char sid
 			boardPos = coordXY(3, y);
 			strPos++;
 		}
-		else if (c >= 'a' && c <= 'z')//é»‘å­
+		else if (c >= 'a' && c <= 'z')//ºÚ×Ó
 		{
 			curPiece = blacks[charToChessType(c)];
 			blacks[charToChessType(c)]++;
@@ -133,7 +133,7 @@ void Board::refreshBoard(const char* fen, const char* moves,int movNum, char sid
 			boardPos++;
 			strPos++;
 		}
-		else if (c >= 'A' && c <= 'Z')//çº¢å­
+		else if (c >= 'A' && c <= 'Z')//ºì×Ó
 		{
 			curPiece = reds[charToChessType(c)];
 			reds[charToChessType(c)]++;
@@ -153,28 +153,28 @@ void Board::refreshBoard(const char* fen, const char* moves,int movNum, char sid
 	for (int i = 0; i < movNum; i++)
 	{
 		src = charToPos(moves[strPos], moves[strPos + 1]);
-		dst= charToPos(moves[strPos+2], moves[strPos + 3]);
+		dst = charToPos(moves[strPos + 2], moves[strPos + 3]);
 		mv = getMV(src, dst);
 		makeMove(mv);
 		strPos += 5;
 	}
 }
 
-bool Board::isLegalMove(int_16 mv)//åˆ¤æ–­ä¸€æ­¥æ£‹æ˜¯å¦åˆæ³•
+bool Board::isLegalMove(int_16 mv)//ÅĞ¶ÏÒ»²½ÆåÊÇ·ñºÏ·¨
 {
 	int_8 src = getSRC(mv);
 	int_8 sp = chessBoard[src];
 	int_8 dst = getDST(mv);
 	int_8 dp = chessBoard[dst];
-	int delta=0;
-	int kp=0;
+	int delta = 0;
+	int kp = 0;
 	if (!inBoard(src) || !inBoard(dst))
 		return false;
-	if (!checkSide(sp, player))//å‡†å¤‡ç§»åŠ¨çš„ä¸æ˜¯å½“å‰æŒæ–¹çš„æ£‹å­
+	if (!checkSide(sp, player))//×¼±¸ÒÆ¶¯µÄ²»ÊÇµ±Ç°³Ö·½µÄÆå×Ó
 		return false;
-	if (dp && checkSide(dp, player))//è½å­å¤„æœ‰å½“å‰æŒæ–¹çš„æ£‹å­
+	if (dp && checkSide(dp, player))//Âä×Ó´¦ÓĞµ±Ç°³Ö·½µÄÆå×Ó
 		return false;
-	switch (pieceIndex(sp)) 
+	switch (pieceIndex(sp))
 	{
 	case(KING_FROM):
 		return inBox(dst, player) && kingLegal(src, dst);
@@ -183,7 +183,7 @@ bool Board::isLegalMove(int_16 mv)//åˆ¤æ–­ä¸€æ­¥æ£‹æ˜¯å¦åˆæ³•
 		return inBox(dst, player) && advisorLegal(src, dst);
 	case(BISHOP_FROM):
 	case(BISHOP_TO):
-		return (!crossRiver(player, dst)) && bishopLegal(src, dst) && 
+		return (!crossRiver(player, dst)) && bishopLegal(src, dst) &&
 			chessBoard[(src + dst) >> 1] == 0;
 	case(KNIGHT_FROM):
 	case(KNIGHT_TO):
@@ -219,7 +219,7 @@ bool Board::isLegalMove(int_16 mv)//åˆ¤æ–­ä¸€æ­¥æ£‹æ˜¯å¦åˆæ³•
 			return true;
 		else
 			return false;
-	default://å…µå’
+	default://±ø×ä
 		int delta = player == BLACK ? 16 : -16;
 		int diff = dst - src;
 		if (crossRiver(player, src))
@@ -227,15 +227,15 @@ bool Board::isLegalMove(int_16 mv)//åˆ¤æ–­ä¸€æ­¥æ£‹æ˜¯å¦åˆæ³•
 		else
 			return diff == delta;
 	}
-	
+
 }
 
-bool Board::isChecked(Player player)//åˆ¤æ–­æŸç©å®¶æ˜¯å¦è¢«å°†å†›
+bool Board::isChecked(Player player)//ÅĞ¶ÏÄ³Íæ¼ÒÊÇ·ñ±»½«¾ü
 {
 	Player side = player;
 	int_8 kingIndex = player == RED ? 16 : 32;
 	int_8 kingPos = chessView[kingIndex];
-	//åˆ¤æ–­æ˜¯å¦è¢«é©¬å°†å†›
+	//ÅĞ¶ÏÊÇ·ñ±»Âí½«¾ü
 	for (int i = 0; i < 8; i++)
 	{
 		int delta = KNIGHT_DELTA[i];
@@ -245,14 +245,14 @@ bool Board::isChecked(Player player)//åˆ¤æ–­æŸç©å®¶æ˜¯å¦è¢«å°†å†›
 			chessBoard[src + LegalSpan[delta + 64]] == 0)
 			return true;
 	}
-	//åˆ¤æ–­æ˜¯å¦è¢«è½¦æˆ–ç‚®å°†å†›æˆ–å°†å¸…å¯¹è„¸
+	//ÅĞ¶ÏÊÇ·ñ±»³µ»òÅÚ½«¾ü»ò½«Ë§¶ÔÁ³
 	for (int i = 0; i < 4; i++)
 	{
 		int delta = KING_DELTA[i];
 		int_8 src = kingPos, dst = kingPos + delta;
 		while (inBoard(dst) && chessBoard[dst] == 0)
 			dst += delta;
-		if ((PieceType[chessBoard[dst]] == ROOK_TYPE|| PieceType[chessBoard[dst]] == KING_TYPE) &&
+		if ((PieceType[chessBoard[dst]] == ROOK_TYPE || PieceType[chessBoard[dst]] == KING_TYPE) &&
 			checkSide(chessBoard[dst], rival(player)))
 			return true;
 		dst += delta;
@@ -261,8 +261,8 @@ bool Board::isChecked(Player player)//åˆ¤æ–­æŸç©å®¶æ˜¯å¦è¢«å°†å†›
 		if (PieceType[chessBoard[dst]] == CANNON_TYPE && checkSide(chessBoard[dst], rival(player)))
 			return true;
 	}
-	//åˆ¤æ–­æ˜¯å¦è¢«å…µå’å°†å†›
-	for (int i = 0; i < 4; i++) 
+	//ÅĞ¶ÏÊÇ·ñ±»±ø×ä½«¾ü
+	for (int i = 0; i < 4; i++)
 	{
 		int delta = KING_DELTA[i];
 		int_8 src = kingPos, dst = kingPos + delta;
@@ -290,8 +290,8 @@ int Board::RepStatus(int limit) const {
 	const MoveStruct* tMv;
 
 	selfSide = false;
-	bPerpCheck = bOppPerpCheck = true;	// é•¿å°†æ ‡è®°
-	tMv = pastMoves + pastMoveNum - 1;	// æŒ‡å‘å†å²è¡¨ä¸­æœ€åèŠ‚ç‚¹
+	bPerpCheck = bOppPerpCheck = true;	// ³¤½«±ê¼Ç
+	tMv = pastMoves + pastMoveNum - 1;	// Ö¸ÏòÀúÊ·±íÖĞ×îºó½Úµã
 	while (tMv->move != 0 && tMv->captured == 0) {
 		if (selfSide) {
 			bPerpCheck = bPerpCheck && tMv->checked;
@@ -314,12 +314,12 @@ int Board::RepStatus(int limit) const {
 void Board::clearMoves()
 {
 	pastMoveNum = 1;
-	pastMoves[0] = { 0,0,checked,zobr }; 
+	pastMoves[0] = { 0,0,checked,zobr };
 }
 
-int Board::genMoves(int_16* mvs, bool captureOnly)//ç”Ÿæˆèµ°æ³•ï¼Œè¿”å›èµ°æ³•æ•°
+int Board::genMoves(int_16* mvs, bool captureOnly)//Éú³É×ß·¨£¬·µ»Ø×ß·¨Êı
 {
-	int_8 curPos, curPiece,curType;
+	int_8 curPos, curPiece, curType;
 	int mvNum = 0;
 	for (curPos = 51; curPos <= 203; curPos++)
 	{
@@ -333,7 +333,7 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//ç”Ÿæˆèµ°æ³•ï¼Œè¿”å›èµ°æ³•æ
 			for (int i = 0; i < 4; i++)
 			{
 				int_8 src = curPos, dst = curPos + KING_DELTA[i];
-				if (inBox(dst,player)&&!checkSide(chessBoard[dst], player))
+				if (inBox(dst, player) && !checkSide(chessBoard[dst], player))
 				{
 					if (!captureOnly || checkSide(chessBoard[dst], rival(player)))
 					{
@@ -363,7 +363,7 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//ç”Ÿæˆèµ°æ³•ï¼Œè¿”å›èµ°æ³•æ
 			for (int i = 0; i < 4; i++)
 			{
 				int_8 src = curPos, dst = curPos + BISHOP_DELTA[i];
-				if (!crossRiver(player,dst) && !checkSide(chessBoard[dst], player)&& chessBoard[(src + dst) >> 1] == 0)
+				if (!crossRiver(player, dst) && !checkSide(chessBoard[dst], player) && chessBoard[(src + dst) >> 1] == 0)
 				{
 					if (!captureOnly || checkSide(chessBoard[dst], rival(player)))
 					{
@@ -379,7 +379,7 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//ç”Ÿæˆèµ°æ³•ï¼Œè¿”å›èµ°æ³•æ
 			{
 				int delta = KNIGHT_DELTA[i];
 				int_8 src = curPos, dst = curPos + delta;
-				if (inBoard(dst) && !checkSide(chessBoard[dst], player) &&chessBoard[src+LegalSpan[delta+64]]==0)
+				if (inBoard(dst) && !checkSide(chessBoard[dst], player) && chessBoard[src + LegalSpan[delta + 64]] == 0)
 				{
 					if (!captureOnly || checkSide(chessBoard[dst], rival(player)))
 					{
@@ -430,7 +430,7 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//ç”Ÿæˆèµ°æ³•ï¼Œè¿”å›èµ°æ³•æ
 				}
 			}
 			break;
-		default://å…µå’
+		default://±ø×ä
 			int delta = player == BLACK ? 16 : -16;
 			int_8 src = curPos, dst = curPos + delta;
 			if (!checkSide(chessBoard[dst], player))
@@ -513,8 +513,8 @@ int_32 RC4::NextLong(void) {
 	return Ret.dw;
 }
 
-//const char* const cszPieceBytesInChineseBlack[7] = { "å°†","å£«","è±¡","ç¢¼","è»Š","ç ²","å’" };
-//const char* const cszPieceBytesInChineseRed[7] = { "å¸…","ä»•","ç›¸","é©¬","è½¦","ç‚®","å…µ" };
+//const char* const cszPieceBytesInChineseBlack[7] = { "½«","Ê¿","Ïó","´a","Ü‡","³h","×ä" };
+//const char* const cszPieceBytesInChineseRed[7] = { "Ë§","ÊË","Ïà","Âí","³µ","ÅÚ","±ø" };
 
 /*
 inline const char* PIECE_BYTE_IN_CHINESE(int pt, bool type) {

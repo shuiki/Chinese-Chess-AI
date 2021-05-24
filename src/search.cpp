@@ -1,14 +1,5 @@
 #include"search.h"
-#include"tools.h"
 const bool NO_NULL = false; // "SearchPV()"的参数，是否禁止空着裁剪
-/*******************
-限制宽度的深度优先搜索（迭代深度优先搜索的一步）用alpha-beta算法实现
-根据searchInfo中mvs.mvs中存储的所有走法及顺序，
-beta:本层节点最小值 alpha:上一层节点值
-散列项里到底要保存什么值，并且当你要获取它时怎样来做。
-答案是储存一个值，另加一个标志来说明这个值是什么含义。
-**********************/
-
 // 重复裁剪
 static int RepPruning(const Board& pos, int vlBeta) {
 	int vlRep = pos.RepStatus(1);
@@ -17,13 +8,92 @@ static int RepPruning(const Board& pos, int vlBeta) {
 	}
 	return -MATE_VALUE;
 }
+// MVV/LVA每种子力的价值
 
+static int cucMvvLva[24] = {
+  0, 0, 0, 0, 0, 0, 0, 0,
+  5, 1, 1, 3, 4, 3, 2, 0,
+  5, 1, 1, 3, 4, 3, 2, 0
+};
+inline int MvvLva(int mv)
+{
+	return (cucMvvLva[searchInfo.board.chessBoard[getDST(mv)]] << 3) - cucMvvLva[searchInfo.board.chessBoard[getSRC(mv)]];
+}
+
+bool CompareMvvLva(const int lpmv1, const int lpmv2) {
+	return MvvLva(lpmv1) > MvvLva(lpmv2);
+}
+
+/*******
+***********
+***********************/
+// 静态搜索过程
+static int static_Search(Board& pos, int Alpha, int Beta) {
+	int vlBest, vl, nGenMoves;
+	int_16 mvs[MAX_GEN_MVS];
+	// 1. 重复裁剪；
+	vl = RepPruning(pos, Beta);
+	if (vl > -MATE_VALUE) {
+		return vl;
+	}
+	// 2. 达到极限深度，直接返回评价值；
+	if (pos.distance == LIMIT_DEPTH) {
+		return  pos.Evaluate();
+	}
+	// 3. 初始化；
+	vlBest = -MATE_VALUE;
+	// 4. 对于被将军的局面，生成全部着法；
+	if (pos.isChecked(pos.player)) {
+		nGenMoves = pos.genMoves(mvs);
+		std::sort(mvs, mvs + nGenMoves, CompareHistory);
+	}
+	else {
+		// 5. 对于未被将军的局面，在生成着法前首先尝试空着(空着启发)，即对局面作评价；
+		vl = pos.Evaluate();
+		if (vl >= Beta) {
+			return vl;
+		}
+		vlBest = vl;
+		Alpha = max(vl, Alpha);
+		// 6. 对于未被将军的局面，生成并排序所有吃子着法(MVV(LVA)启发)；
+		nGenMoves = pos.genMoves(mvs, true);
+		std::sort(mvs, mvs + nGenMoves, CompareMvvLva);
+	}
+	// 7. 用Alpha-Beta算法搜索这些着法；
+	for (int i = 0; i < nGenMoves; i++) {
+		if (pos.makeMove(mvs[i])) {
+			vl = -static_Search(pos, -Beta, -Alpha);
+			pos.undoMakeMove();
+			if (vl > vlBest) {
+				if (vl >= Beta) {
+					return vl;
+				}
+				vlBest = vl;
+				Alpha = max(vl, Alpha);
+			}
+		}
+	}
+	// 8. 返回分值。
+	if (vlBest == -MATE_VALUE) {
+		return pos.distance - MATE_VALUE;
+	}
+	else {
+		return vlBest;
+	}
+}
+
+/*******************
+限制宽度的深度优先搜索（迭代深度优先搜索的一步）用alpha-beta算法实现
+根据searchInfo中mvs.mvs中存储的所有走法及顺序，
+beta:本层节点最小值 alpha:上一层节点值
+散列项里到底要保存什么值，并且当你要获取它时怎样来做。
+答案是储存一个值，另加一个标志来说明这个值是什么含义。
+**********************/
 static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
 	int vl,vlBest,nHashFlag;
 	int nNewDepth, nCurrTimer;
-	int mvBest, mvHash;
-	int_16 mv;
+	uint16_t mvBest, mvHash, mv;
 	MoveSortStruct MoveSort;
 	// 1. 在叶子结点处调用静态搜索；
 	if (depth <= 0)
@@ -37,7 +107,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		return vl;
 	}
 	// 3. 置换裁剪；如果该搜索节点在置换表中出现
-	vl = probeHash(searchInfo.board, alpha, beta, depth, mv);
+	vl = probeHash(searchInfo.board, depth, alpha, beta, mvHash);
 	if (searchInfo.bUseHash && vl > -MATE_VALUE) {
 		// 由于PV结点不适用置换裁剪，所以不会发生PV路线中断的情况
 		return vl;
@@ -61,8 +131,6 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	nHashFlag = HASH_ALPHA;
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
-	MoveSortStruct MoveSort;
-	int mv;
 	while ((mv = MoveSort.Next()) != 0) {
 		if (searchInfo.board.makeMove(mv))//不是被将着法，则尝试走
 		{
@@ -81,7 +149,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 				alpha = vl;
 			}
 		}
-		nCurrTimer = (int)(GetTime() - searchInfo.time);
+		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
 			searchInfo.bStop = true;
 		}
@@ -106,9 +174,9 @@ int SearchRoot(int depth) {
 	// 根结点搜索例程包括以下几个步骤：
 	// 1. 初始化
 	vlBest = -MATE_VALUE;
-	searchInfo.mvs.Init(searchInfo.mvResult);
+	mvs.Init(searchInfo.mvResult);
 	// 2. 逐一搜索每个着法
-	while ((mv = searchInfo.mvs.Next()) != 0) {
+	while ((mv = mvs.Next()) != 0) {
 		if (searchInfo.board.makeMove(mv)) {
 			// 3. 尝试选择性延伸(只考虑将军延伸)
 			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
@@ -135,91 +203,16 @@ int SearchRoot(int depth) {
 				searchInfo.mvResult = mv;
 			}
 
-			nCurrTimer = (int)(GetTime() - searchInfo.time);
+			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 			if (nCurrTimer > searchInfo.nMaxTimer) {
 				searchInfo.bStop = true;
 			}
 
 		}
 	}
-	recordHash(searchInfo.board, HASH_PV, vlBest, depth, searchInfo.mvResult);
+	recordHash(searchInfo.board, depth, vlBest, HASH_PV, searchInfo.mvResult);
 	searchInfo.SetBestMove(searchInfo.mvResult, depth, searchInfo.wmvKiller[searchInfo.board.distance]);
 	return vlBest;
-}
-/*********
-***********
-***********/
-// MVV/LVA每种子力的价值
-
-static int cucMvvLva[24] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  5, 1, 1, 3, 4, 3, 2, 0,
-  5, 1, 1, 3, 4, 3, 2, 0
-};
-inline int MvvLva(int mv) 
-{
-	return (cucMvvLva[searchInfo.board.chessBoard[getDST(mv)]] << 3) - cucMvvLva[searchInfo.board.chessBoard[getSRC(mv)]];
-}
-
-bool CompareMvvLva(const int lpmv1, const int lpmv2) {
-	return MvvLva(lpmv1) > MvvLva(lpmv2);
-}
-/*******
-***********
-***********************/
-// 静态搜索过程
-static int static_Search(Board& pos, int Alpha, int Beta) {
-	int vlBest, vl, nGenMoves;
-	int_16 mvs[MAX_GEN_MVS];
-	// 1. 重复裁剪；
-	vl = RepPruning(pos, Beta);
-	if (vl > -MATE_VALUE) {
-		return vl;
-	}
-	// 2. 达到极限深度，直接返回评价值；
-	if (pos.distance == LIMIT_DEPTH) {
-		return  pos.Evaluate();
-	}
-	// 3. 初始化；
-	vlBest = -MATE_VALUE;
-	// 4. 对于被将军的局面，生成全部着法；
-	if (pos.isChecked(pos.player)) {
-		nGenMoves = pos.genMoves(mvs);
-		std::sort(mvs, mvs + nGenMoves, SearchInfo::CompareHistory);
-	}
-	else {
-		// 5. 对于未被将军的局面，在生成着法前首先尝试空着(空着启发)，即对局面作评价；
-		vl = pos.Evaluate();
-		if (vl >= Beta) {
-			return vl;
-		}
-		vlBest = vl;
-		Alpha = max(vl, Alpha);
-		// 6. 对于未被将军的局面，生成并排序所有吃子着法(MVV(LVA)启发)；
-		nGenMoves = pos.genMoves(mvs, true);
-		std::sort(mvs, mvs + nGenMoves,CompareMvvLva);
-	}
-	// 7. 用Alpha-Beta算法搜索这些着法；
-	for (int i = 0; i < nGenMoves; i++) {
-		if (pos.makeMove(mvs[i])) {
-			vl = -static_Search(pos, -Beta, -Alpha);
-			pos.undoMakeMove();
-			if (vl > vlBest) {
-				if (vl >= Beta) {
-					return vl;
-				}
-				vlBest = vl;
-				Alpha = max(vl, Alpha);
-			}
-		}
-	}
-	// 8. 返回分值。
-	if (vlBest == -MATE_VALUE) {
-		return pos.distance - MATE_VALUE;
-	}
-	else {
-		return vlBest;
-	}
 }
 /***********************
 主搜索函数
@@ -243,17 +236,18 @@ void SearchMain(int depth)
 	//BookStruct bks[MAX_GEN_MOVES];
 	// 主搜索例程包括以下几个步骤：
 
-	// 2. 从开局库中搜索着法
-	//if (Search.bUseBook) {
+
+// 2. 从开局库中搜索着法
+	//if (searchInfo.bUseBook) {
 	//	// a. 获取开局库中的所有走法
-	//	nBookMoves = GetBookMoves(Search.pos, bks);
+	//	nBookMoves = GetBookMoves(searchInfo.board, bks);
 	//	if (nBookMoves > 0) {
 	//		vl = 0;
 	//		for (i = 0; i < nBookMoves; i++) {
 	//			vl += bks[i].wvl;
 	//		}
 	//		// b. 根据权重随机选择一个走法
-	//		vl = Search.rc4Random.NextLong() % (uint32_t)vl;
+	//		vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
 	//		for (i = 0; i < nBookMoves; i++) {
 	//			vl -= bks[i].wvl;
 	//			if (vl < 0) {
@@ -261,18 +255,18 @@ void SearchMain(int depth)
 	//			}
 	//		}
 	//		// c. 如果开局库中的着法构成循环局面，那么不走这个着法
-	//		Search.pos.MakeMove(bks[i].wmv);
-	//		if (Search.pos.RepStatus(3) == 0) {
-	//			Search2.mvResult = bks[i].wmv;
-	//			Search.pos.UndoMakeMove();
-	//			uint32_t result = MOVE_COORD(Search2.mvResult);
+	//		searchInfo.board.makeMove(bks[i].wmv);
+	//		if (searchInfo.board.RepStatus(3) == 0) {
+	//			searchInfo.mvResult = bks[i].wmv;
+	//			searchInfo.board.undoMakeMove();
+	//			uint32_t result = MOVE_COORD(searchInfo.mvResult);
 	//			printf("bestmove %.4s\n", (const char*)&result);
 	//			fflush(stdout);
-	//			if (Search.bDebug)
-	//				Search.pos.DrawBoard(Search2.mvResult);
+	//			if (searchInfo.bDebug)
+	//				searchInfo.board.drawBoard();
 	//			return;
 	//		}
-	//		Search.pos.UndoMakeMove();
+	//		searchInfo.board.undoMakeMove();
 	//	}
 	//}
 
@@ -295,7 +289,7 @@ void SearchMain(int depth)
 	searchInfo.ClearHistory();
 	memset(searchInfo.HashTable, 0, sizeof(searchInfo.HashTable));
 	// 由于 ClearHash() 需要消耗一定时间，所以计时从这以后开始比较合理
-	searchInfo.time = GetTime();
+	searchInfo.llTime = GetTime();
 	vlLast = 0;
 	nCurrTimer = 0;
 
@@ -313,7 +307,7 @@ void SearchMain(int depth)
 			printf("info depth %d score %d\n", i, vl);
 			fflush(stdout);
 		}
-		nCurrTimer = (int)(GetTime() - searchInfo.time);
+		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		// 7. 如果搜索时间超过适当时限，则终止搜索
 		nLimitTimer = searchInfo.nMaxTimer;
 		// a. 如果当前搜索值没有落后前一层很多，那么适当时限减半

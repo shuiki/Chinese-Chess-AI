@@ -1,3 +1,5 @@
+#ifndef TOOS
+#define TOOS
 #include <iostream>
 #include <sys/timeb.h>
 
@@ -113,3 +115,4 @@ inline int SIMPLE_VALUE(int pc) {
 inline uint32_t BIT_PIECE(int pc) {
   return 1 << (pc - 16);
 }
+#endif

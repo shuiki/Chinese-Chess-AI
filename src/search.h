@@ -33,7 +33,39 @@ hash置换表结构体
 *********************/
 enum State { HashState, PHASE_KILLER_1, PHASE_KILLER_2, AllSearchState, OdinaryState };
 
-extern SearchInfo searchInfo;
+class SearchInfo {
+public:
+	//MoveSortStruct* mvs;				//根节点着法,目前可以选择的着法
+	HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
+	int nHistoryTable[65536];			// 历史表
+	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
+
+	int64_t llTime;                     // 计时器
+	uint32_t mvResult;					// 走棋结果
+	bool bStop;				            // 中止信号
+	int nUnchanged;                     // 未改变最佳着法的深度
+	int vlLast;
+	Board board;                // 待搜索的局面
+	int time;				//限制时间
+	bool bQuit;						   // 是否收到退出指令
+	bool bDebug;					   // 是否调试模式
+	bool bUseHash, bUseBook;           // 是否使用置换表裁剪和开局库
+	RC4 rc4Random;               // 随机数
+	int nMaxTimer;					   // 最大使用时间
+	char szBookFile[1024];             // 开局库
+	//bool CompareHistory(const int lpmv1, const int lpmv2);
+	void ClearHistory();
+	inline void ClearKiller(uint16_t(*lpwmvKiller)[2]);
+	void SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller);
+
+}searchInfo;
+//static struct {
+//	
+//	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
+//	HashStruct HashTable[HASH_SIZE];	// 置换表
+//	int nHistoryTable[65536];			// 历史表
+//	MoveSortStruct MoveSort;            // 根结点的着法序列
+//} Search2;
 class MoveSortStruct {
 public:
 	uint16_t mvs[MAX_GEN_MVS];           // 所有的走法
@@ -48,39 +80,17 @@ public:
 	}
 	int Next();
 };
-class SearchInfo {
-public:
-	MoveSortStruct mvs;				//根节点着法,目前可以选择的着法
-	HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
-	int nHistoryTable[65536];			// 历史表
-	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
-	int mvResult;			//某一步搜索得到的结果 存储方式：H7-E7	(炮８平５）相当于一个全局变量
-	int alpha, beta;		//beta:本层节点最大值 alpha:上一层节点最大值
-	int vlLast;
-	Board board;                // 待搜索的局面
-	int time;				//限制时间
-	int nUnchanged;
-	bool bQuit;						   // 是否收到退出指令
-	bool bDebug;					   // 是否调试模式
-	bool bStop;				            // 中止信号
-	bool bUseHash, bUseBook;           // 是否使用置换表裁剪和开局库
-	RC4 rc4Random;               // 随机数
-	int nMaxTimer;					   // 最大使用时间
-	char szBookFile[1024];             // 开局库
-	bool CompareHistory(const int lpmv1, const int lpmv2);
-	void ClearHistory();
-	inline void ClearKiller(uint16_t(*lpwmvKiller)[2]);
-	void SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller);
-};
+MoveSortStruct mvs;
+// "sort"按历史表排序的比较函数.排序方式：越好的越靠后
+bool CompareHistory(const int lpmv1, const int lpmv2) {
+	return searchInfo.nHistoryTable[lpmv1] < searchInfo.nHistoryTable[lpmv2];
+}
 extern ZobristTable zobristInfo;
 /**********************
 * 走法存储排序结构体
 ***********************/
 
-// "sort"按历史表排序的比较函数.排序方式：越好的越靠后
-bool SearchInfo::CompareHistory(const int lpmv1, const int lpmv2) {
-	return nHistoryTable[lpmv1] < nHistoryTable[lpmv2];
-}
+
 void SearchInfo::ClearHistory() {
 	memset(nHistoryTable, 0, 65536 * sizeof(int));
 }
@@ -118,7 +128,7 @@ int MoveSortStruct::Next() {
 	case AllSearchState:
 		state = OdinaryState;
 		index = searchInfo.board.genMoves(mvs);
-		sort(mvs, mvs + index, SearchInfo::CompareHistory);
+		sort(mvs, mvs + index, CompareHistory);
 	case OdinaryState:
 		while (index > 0) {
 			int mv = mvs[--index];

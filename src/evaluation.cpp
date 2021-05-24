@@ -4,7 +4,7 @@
 #include "BoardManipulate.h"
 using namespace std;
 
-// å„ç§å­åŠ›çš„å±è”½ä½
+// ¸÷ÖÖ×ÓÁ¦µÄÆÁ±ÎÎ»
 const int KING_BITPIECE = 1 << KING_FROM;
 const int ADVISOR_BITPIECE = (1 << ADVISOR_FROM) | (1 << ADVISOR_TO);
 const int BISHOP_BITPIECE = (1 << BISHOP_FROM) | (1 << BISHOP_TO);
@@ -12,7 +12,7 @@ const int KNIGHT_BITPIECE = (1 << KNIGHT_FROM) | (1 << KNIGHT_TO);
 const int ROOK_BITPIECE = (1 << ROOK_FROM) | (1 << ROOK_TO);
 const int CANNON_BITPIECE = (1 << CANNON_FROM) | (1 << CANNON_TO);
 const int PAWN_BITPIECE = (1 << PAWN_FROM) | (1 << (PAWN_FROM + 1)) |
-    (1 << (PAWN_FROM + 2)) | (1 << (PAWN_FROM + 3)) | (1 << PAWN_TO);
+(1 << (PAWN_FROM + 2)) | (1 << (PAWN_FROM + 3)) | (1 << PAWN_TO);
 const int ATTACK_BITPIECE = KNIGHT_BITPIECE | ROOK_BITPIECE | CANNON_BITPIECE | PAWN_BITPIECE;
 
 const int ROOK_MIDGAME_VALUE = 6;
@@ -24,22 +24,22 @@ const int TOTAL_ATTACK_VALUE = 8;
 const int ADVISOR_BISHOP_ATTACKLESS_VALUE = 80;
 const int TOTAL_ADVISOR_LEAKAGE = 80;
 
-// å„ç§æ£‹å½¢çš„å­åŠ›è¯„ä¼°
-// ä½ç½®åˆ†å€¼
-// çµæ´»æ€§åˆ†å€¼
-// æ”»å‡»æˆ–ä¿æŠ¤å…³ç³»
+// ¸÷ÖÖÆåĞÎµÄ×ÓÁ¦ÆÀ¹À
+// Î»ÖÃ·ÖÖµ
+// Áé»îĞÔ·ÖÖµ
+// ¹¥»÷»ò±£»¤¹ØÏµ
 
-// å¼€å±€ä½ç½®åˆ†å€¼ï¼Œæ®‹å±€å¦è®¡
-// ä»¥çº¢æ–¹ä¸ºä¾‹ï¼Œå¯¹äºé»‘æ–¹éœ€è¦é€†è½¬æ£‹ç›˜(254-sq)
-// éƒ¨åˆ†å‚ç…§eleeye
-const int position_val[7][256]={
+// ¿ª¾ÖÎ»ÖÃ·ÖÖµ£¬²Ğ¾ÖÁí¼Æ
+// ÒÔºì·½ÎªÀı£¬¶ÔÓÚºÚ·½ĞèÒªÄæ×ªÆåÅÌ(254-sq)
+// ²¿·Ö²ÎÕÕeleeye
+const int position_val[7][256] = {
     // KING
     {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -54,11 +54,11 @@ const int position_val[7][256]={
     },
     // ADVISOR
     {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -73,11 +73,11 @@ const int position_val[7][256]={
     },
     // BISHOP
     {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -93,89 +93,89 @@ const int position_val[7][256]={
     // KNIGHT
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 
-    0,  0,  0, 90, 90, 90, 96, 90, 96, 90, 90, 90,  0,  0,  0,  0, 
-    0,  0,  0, 90, 96,103, 97, 94, 97,103, 96, 90,  0,  0,  0,  0, 
-    0,  0,  0, 92, 98, 99,103, 99,103, 99, 98, 92,  0,  0,  0,  0, 
-    0,  0,  0, 93,108,100,107,100,107,100,108, 93,  0,  0,  0,  0, 
-    0,  0,  0, 90,100, 99,103,104,103, 99,100, 90,  0,  0,  0,  0, 
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0, 90, 90, 90, 96, 90, 96, 90, 90, 90,  0,  0,  0,  0,
+    0,  0,  0, 90, 96,103, 97, 94, 97,103, 96, 90,  0,  0,  0,  0,
+    0,  0,  0, 92, 98, 99,103, 99,103, 99, 98, 92,  0,  0,  0,  0,
+    0,  0,  0, 93,108,100,107,100,107,100,108, 93,  0,  0,  0,  0,
+    0,  0,  0, 90,100, 99,103,104,103, 99,100, 90,  0,  0,  0,  0,
     0,  0,  0, 90, 98,101,102,103,102,101, 98, 90,  0,  0,  0,  0,
     0,  0,  0, 92, 94, 98, 95, 98, 95, 98, 94, 92,  0,  0,  0,  0,
     0,  0,  0, 93, 92, 94, 95, 92, 95, 94, 92, 93,  0,  0,  0,  0,
     0,  0,  0, 85, 90, 92, 93, 85, 93, 92, 90, 85,  0,  0,  0,  0,
     0,  0,  0, 88, 85, 90, 88, 90, 88, 90, 85, 88,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0    
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     },
     // ROOK
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,206,208,207,213,214,213,207,208,206,  0,  0,  0,  0,
-	0,  0,  0,206,212,209,216,233,216,209,212,206,  0,  0,  0,  0,
-	0,  0,  0,206,208,207,214,216,214,207,208,206,  0,  0,  0,  0,
-	0,  0,  0,206,213,213,216,216,216,213,213,206,  0,  0,  0,  0,
-	0,  0,  0,208,211,211,214,215,214,211,211,208,  0,  0,  0,  0,
-	0,  0,  0,208,212,212,214,215,214,212,212,208,  0,  0,  0,  0,
-	0,  0,  0,204,209,204,212,214,212,204,209,204,  0,  0,  0,  0,
-	0,  0,  0,198,208,204,212,212,212,204,208,198,  0,  0,  0,  0,
-	0,  0,  0,200,208,206,212,200,212,206,208,200,  0,  0,  0,  0,
-	0,  0,  0,194,206,204,212,200,212,204,206,194,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,206,208,207,213,214,213,207,208,206,  0,  0,  0,  0,
+    0,  0,  0,206,212,209,216,233,216,209,212,206,  0,  0,  0,  0,
+    0,  0,  0,206,208,207,214,216,214,207,208,206,  0,  0,  0,  0,
+    0,  0,  0,206,213,213,216,216,216,213,213,206,  0,  0,  0,  0,
+    0,  0,  0,208,211,211,214,215,214,211,211,208,  0,  0,  0,  0,
+    0,  0,  0,208,212,212,214,215,214,212,212,208,  0,  0,  0,  0,
+    0,  0,  0,204,209,204,212,214,212,204,209,204,  0,  0,  0,  0,
+    0,  0,  0,198,208,204,212,212,212,204,208,198,  0,  0,  0,  0,
+    0,  0,  0,200,208,206,212,200,212,206,208,200,  0,  0,  0,  0,
+    0,  0,  0,194,206,204,212,200,212,204,206,194,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     },
     // CANNON
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,100,100, 96, 91, 90, 91, 96,100,100,  0,  0,  0,  0,
-	0,  0,  0, 98, 98, 96, 92, 89, 92, 96, 98, 98,  0,  0,  0,  0,
-	0,  0,  0, 97, 97, 96, 91, 92, 91, 96, 97, 97,  0,  0,  0,  0,
-	0,  0,  0, 96, 99, 99, 98,100, 98, 99, 99, 96,  0,  0,  0,  0,
-	0,  0,  0, 96, 96, 96, 96,100, 96, 96, 96, 96,  0,  0,  0,  0,
-	0,  0,  0, 95, 96, 99, 96,100, 96, 99, 96, 95,  0,  0,  0,  0,
-	0,  0,  0, 96, 96, 96, 96, 96, 96, 96, 96, 96,  0,  0,  0,  0,
-	0,  0,  0, 97, 96,100, 99,101, 99,100, 96, 97,  0,  0,  0,  0,
-	0,  0,  0, 96, 97, 98, 98, 98, 98, 98, 97, 96,  0,  0,  0,  0,
-	0,  0,  0, 96, 96, 97, 99, 99, 99, 97, 96, 96,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,100,100, 96, 91, 90, 91, 96,100,100,  0,  0,  0,  0,
+    0,  0,  0, 98, 98, 96, 92, 89, 92, 96, 98, 98,  0,  0,  0,  0,
+    0,  0,  0, 97, 97, 96, 91, 92, 91, 96, 97, 97,  0,  0,  0,  0,
+    0,  0,  0, 96, 99, 99, 98,100, 98, 99, 99, 96,  0,  0,  0,  0,
+    0,  0,  0, 96, 96, 96, 96,100, 96, 96, 96, 96,  0,  0,  0,  0,
+    0,  0,  0, 95, 96, 99, 96,100, 96, 99, 96, 95,  0,  0,  0,  0,
+    0,  0,  0, 96, 96, 96, 96, 96, 96, 96, 96, 96,  0,  0,  0,  0,
+    0,  0,  0, 97, 96,100, 99,101, 99,100, 96, 97,  0,  0,  0,  0,
+    0,  0,  0, 96, 97, 98, 98, 98, 98, 98, 97, 96,  0,  0,  0,  0,
+    0,  0,  0, 96, 96, 97, 99, 99, 99, 97, 96, 96,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     },
     // PAWN
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  9,  9,  9, 11, 13, 11,  9,  9,  9,  0,  0,  0,  0,
-	0,  0,  0, 39, 49, 69, 84, 89, 84, 69, 49, 39,  0,  0,  0,  0,
-	0,  0,  0, 39, 49, 64, 74, 74, 74, 64, 49, 39,  0,  0,  0,  0,
-	0,  0,  0, 39, 46, 54, 59, 61, 59, 54, 46, 39,  0,  0,  0,  0,
-	0,  0,  0, 29, 37, 41, 54, 59, 54, 41, 37, 29,  0,  0,  0,  0,
-	0,  0,  0,  7,  0, 13,  0, 16,  0, 13,  0,  7,  0,  0,  0,  0,
-	0,  0,  0,  7,  0,  7,  0, 15,  0,  7,  0,  7,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  9,  9,  9, 11, 13, 11,  9,  9,  9,  0,  0,  0,  0,
+    0,  0,  0, 39, 49, 69, 84, 89, 84, 69, 49, 39,  0,  0,  0,  0,
+    0,  0,  0, 39, 49, 64, 74, 74, 74, 64, 49, 39,  0,  0,  0,  0,
+    0,  0,  0, 39, 46, 54, 59, 61, 59, 54, 46, 39,  0,  0,  0,  0,
+    0,  0,  0, 29, 37, 41, 54, 59, 54, 41, 37, 29,  0,  0,  0,  0,
+    0,  0,  0,  7,  0, 13,  0, 16,  0, 13,  0,  7,  0,  0,  0,  0,
+    0,  0,  0,  7,  0,  7,  0, 15,  0,  7,  0,  7,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     }
 };
 
-const int EndGame_val[7][256]={
+const int EndGame_val[7][256] = {
     // KING
     {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -190,11 +190,11 @@ const int EndGame_val[7][256]={
     },
     // ADVISOR
     {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -209,11 +209,11 @@ const int EndGame_val[7][256]={
     },
     // BISHOP
     {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -243,14 +243,14 @@ const int EndGame_val[7][256]={
     0,  0,  0, 88, 90, 92, 90, 90, 90, 92, 90, 88,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0   
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     },
     // ROOK
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,182,182,182,184,186,184,182,182,182,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,182,182,182,184,186,184,182,182,182,  0,  0,  0,  0,
     0,  0,  0,184,184,184,186,190,186,184,184,184,  0,  0,  0,  0,
     0,  0,  0,182,182,182,184,186,184,182,182,182,  0,  0,  0,  0,
     0,  0,  0,180,180,180,182,184,182,180,180,180,  0,  0,  0,  0,
@@ -260,16 +260,16 @@ const int EndGame_val[7][256]={
     0,  0,  0,180,180,180,182,184,182,180,180,180,  0,  0,  0,  0,
     0,  0,  0,180,180,180,182,184,182,180,180,180,  0,  0,  0,  0,
     0,  0,  0,180,180,180,182,184,182,180,180,180,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     },
     // CANNON
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,100,100,100,100,100,100,100,100,100,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,100,100,100,100,100,100,100,100,100,  0,  0,  0,  0,
     0,  0,  0,100,100,100,100,100,100,100,100,100,  0,  0,  0,  0,
     0,  0,  0,100,100,100,100,100,100,100,100,100,  0,  0,  0,  0,
     0,  0,  0,100,100,100,102,104,102,100,100,100,  0,  0,  0,  0,
@@ -279,32 +279,32 @@ const int EndGame_val[7][256]={
     0,  0,  0,100,100,100,102,104,102,100,100,100,  0,  0,  0,  0,
     0,  0,  0,100,100,100,104,106,104,100,100,100,  0,  0,  0,  0,
     0,  0,  0,100,100,100,104,106,104,100,100,100,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     },
     // PAWN
     {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0, 10, 10, 10, 15, 15, 15, 10, 10, 10,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0, 10, 10, 10, 15, 15, 15, 10, 10, 10,  0,  0,  0,  0,
     0,  0,  0, 50, 55, 60, 85,100, 85, 60, 55, 50,  0,  0,  0,  0,
     0,  0,  0, 65, 70, 70, 75, 75, 75, 70, 70, 65,  0,  0,  0,  0,
     0,  0,  0, 75, 80, 80, 80, 80, 80, 80, 80, 75,  0,  0,  0,  0,
     0,  0,  0, 70, 70, 65, 70, 70, 70, 65, 70, 70,  0,  0,  0,  0,
     0,  0,  0, 45,  0, 40, 45, 45, 45, 40,  0, 45,  0,  0,  0,  0,
     0,  0,  0, 40,  0, 35, 40, 40, 40, 35,  0, 40,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
     }
 };
 
-const int PawnMidgameAttackless[256]={
+const int PawnMidgameAttackless[256] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -323,7 +323,7 @@ const int PawnMidgameAttackless[256]={
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
-const int PawnEndgameAttackless[256]={
+const int PawnEndgameAttackless[256] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -342,65 +342,66 @@ const int PawnEndgameAttackless[256]={
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
-void Board::PreEvaluate(void){
+void Board::PreEvaluate(void) {
     int i, sq, nMidgameValue, nWhiteAttacks, nBlackAttacks, nWhiteSimpleValue, nBlackSimpleValue;
     uint8_t ucvlPawnPiecesAttacking[256], ucvlPawnPiecesAttackless[256];
-    // å¼€ä¸­å±€è¿˜æ˜¯æ®‹å±€ //
-    // è®¡ç®—å„ç§æ£‹å­æ•°é‡ï¼Œè½¦6ï¼Œé©¬ç‚®3ï¼Œå…¶ä»–1ï¼Œæ—¶é—´è¦å¿«ï¼Œè‚¯å®šä¸èƒ½ç”¨å¾ªç¯
-    nMidgameValue = PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ADVISOR_BITPIECE|BISHOP_BITPIECE|PAWN_BITPIECE)) * OTHER_MIDGAME_VALUE;
-    nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(KNIGHT_BITPIECE|CANNON_BITPIECE)) * KNIGHT_CANNON_MIDGAME_VALUE;
+    // ¿ªÖĞ¾Ö»¹ÊÇ²Ğ¾Ö //
+    // ¼ÆËã¸÷ÖÖÆå×ÓÊıÁ¿£¬³µ6£¬ÂíÅÚ3£¬ÆäËû1£¬Ê±¼äÒª¿ì£¬¿Ï¶¨²»ÄÜÓÃÑ­»·
+    nMidgameValue = PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ADVISOR_BITPIECE | BISHOP_BITPIECE | PAWN_BITPIECE)) * OTHER_MIDGAME_VALUE;
+    nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(KNIGHT_BITPIECE | CANNON_BITPIECE)) * KNIGHT_CANNON_MIDGAME_VALUE;
     nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ROOK_BITPIECE)) * ROOK_MIDGAME_VALUE;
-    // ä½¿ç”¨äºŒæ¬¡å‡½æ•°ï¼Œå­åŠ›å¾ˆå°‘æ—¶è¢«è®¤ä¸ºæ˜¯æ®‹å±€
+    // Ê¹ÓÃ¶ş´Îº¯Êı£¬×ÓÁ¦ºÜÉÙÊ±±»ÈÏÎªÊÇ²Ğ¾Ö
     nMidgameValue = (2 * TOTAL_MIDGAME_VALUE - nMidgameValue) * nMidgameValue / TOTAL_MIDGAME_VALUE;
     PreEval.valueAdvanced = (TOTAL_ADVANCED_VALUE * nMidgameValue + TOTAL_ADVANCED_VALUE / 2) / TOTAL_MIDGAME_VALUE;
-    for(sq = 0;sq<256;sq++)
+    for (sq = 0; sq < 256; sq++)
     {
-        if(inBoard(sq))
+        if (inBoard(sq))
         {
-            PreEval.ucvlWhitePieces[0][sq]=PreEval.ucvlBlackPieces[0][254-sq] = (uint8_t)
-                ((position_val[0][sq]*nMidgameValue + EndGame_val[0][sq]*(TOTAL_MIDGAME_VALUE-nMidgameValue))/TOTAL_MIDGAME_VALUE);
-            PreEval.ucvlWhitePieces[3][sq]=PreEval.ucvlBlackPieces[3][254-sq] = (uint8_t)
-                ((position_val[3][sq]*nMidgameValue + EndGame_val[3][sq]*(TOTAL_MIDGAME_VALUE-nMidgameValue))/TOTAL_MIDGAME_VALUE);
-            PreEval.ucvlWhitePieces[4][sq]=PreEval.ucvlBlackPieces[4][254-sq] = (uint8_t)
-                ((position_val[4][sq]*nMidgameValue + EndGame_val[4][sq]*(TOTAL_MIDGAME_VALUE-nMidgameValue))/TOTAL_MIDGAME_VALUE);
-            PreEval.ucvlWhitePieces[5][sq]=PreEval.ucvlBlackPieces[5][254-sq] = (uint8_t)
-                ((position_val[5][sq]*nMidgameValue + EndGame_val[5][sq]*(TOTAL_MIDGAME_VALUE-nMidgameValue))/TOTAL_MIDGAME_VALUE);
-            ucvlPawnPiecesAttacking[sq] =  (uint8_t)
-                ((position_val[6][sq] * nMidgameValue + EndGame_val[6][sq] * (TOTAL_MIDGAME_VALUE-nMidgameValue))/TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[0][sq] = PreEval.ucvlBlackPieces[0][254 - sq] = (uint8_t)
+                ((position_val[0][sq] * nMidgameValue + EndGame_val[0][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[3][sq] = PreEval.ucvlBlackPieces[3][254 - sq] = (uint8_t)
+                ((position_val[3][sq] * nMidgameValue + EndGame_val[3][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[4][sq] = PreEval.ucvlBlackPieces[4][254 - sq] = (uint8_t)
+                ((position_val[4][sq] * nMidgameValue + EndGame_val[4][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[5][sq] = PreEval.ucvlBlackPieces[5][254 - sq] = (uint8_t)
+                ((position_val[5][sq] * nMidgameValue + EndGame_val[5][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            ucvlPawnPiecesAttacking[sq] = (uint8_t)
+                ((position_val[6][sq] * nMidgameValue + EndGame_val[6][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
             ucvlPawnPiecesAttackless[sq] = (uint8_t)
-              ((PawnMidgameAttackless[sq] * nMidgameValue + PawnEndgameAttackless[sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+                ((PawnMidgameAttackless[sq] * nMidgameValue + PawnEndgameAttackless[sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
         }
     }
 
-    // è¿›æ”»çŠ¶æ€ï¼Œè®¡ç®—è¿‡æ²³æ£‹å­
+    // ½ø¹¥×´Ì¬£¬¼ÆËã¹ıºÓÆå×Ó
     nWhiteAttacks = nBlackAttacks = 0;
-    for (i = 16 + KNIGHT_FROM; i <= 16 + ROOK_TO; i ++) {
-        if (this->chessView[i] != 0 && (this->chessView[i]>>7)==0) {
+    for (i = 16 + KNIGHT_FROM; i <= 16 + ROOK_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
             nWhiteAttacks += 2;
-        }   
-    }
-    for (i = 16 + CANNON_FROM; i <= 16 + PAWN_TO; i ++) {
-        if (this->chessView[i] != 0 && (this->chessView[i]>>7)==0) {
-        nWhiteAttacks ++;
         }
     }
-    for (i = 32 + KNIGHT_FROM; i <= 32 + ROOK_TO; i ++) {
-        if (this->chessView[i] != 0 && (this->chessView[i]>>7)==1) {
-        nBlackAttacks += 2;
+    for (i = 16 + CANNON_FROM; i <= 16 + PAWN_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
+            nWhiteAttacks++;
         }
     }
-    for (i = 32 + CANNON_FROM; i <= 32 + PAWN_TO; i ++) {
-        if (this->chessView[i] != 0 && (this->chessView[i]>>7)==1) {
-        nBlackAttacks ++;
+    for (i = 32 + KNIGHT_FROM; i <= 32 + ROOK_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
+            nBlackAttacks += 2;
         }
     }
-    
-    // å¦‚æœæœ¬æ–¹è½»å­æ•°æ¯”å¯¹æ–¹å¤šï¼Œé‚£ä¹ˆæ¯å¤šä¸€ä¸ªè½»å­(è½¦ç®—2ä¸ªè½»å­)å¨èƒå€¼åŠ 2ã€‚å¨èƒå€¼æœ€å¤šä¸è¶…è¿‡8ã€‚
+    for (i = 32 + CANNON_FROM; i <= 32 + PAWN_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
+            nBlackAttacks++;
+        }
+    }
+
+    // Èç¹û±¾·½Çá×ÓÊı±È¶Ô·½¶à£¬ÄÇÃ´Ã¿¶àÒ»¸öÇá×Ó(³µËã2¸öÇá×Ó)ÍşĞ²Öµ¼Ó2¡£ÍşĞ²Öµ×î¶à²»³¬¹ı8¡£
     nWhiteSimpleValue = PopCnt16(this->wBitPiece[0] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[0] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
     nBlackSimpleValue = PopCnt16(this->wBitPiece[1] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[1] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
     if (nWhiteSimpleValue > nBlackSimpleValue) {
         nWhiteAttacks += (nWhiteSimpleValue - nBlackSimpleValue) * 2;
-    } else {
+    }
+    else {
         nBlackAttacks += (nBlackSimpleValue - nWhiteSimpleValue) * 2;
     }
     nWhiteAttacks = min(nWhiteAttacks, TOTAL_ATTACK_VALUE);
@@ -408,37 +409,37 @@ void Board::PreEvaluate(void){
     // PreEvalEx.vlBlackAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nWhiteAttacks / TOTAL_ATTACK_VALUE;
     // PreEvalEx.vlWhiteAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nBlackAttacks / TOTAL_ATTACK_VALUE;
 
-    for (sq = 0; sq < 256; sq ++) {
+    for (sq = 0; sq < 256; sq++) {
         if (inBoard(sq)) {
-        PreEval.ucvlWhitePieces[1][sq] = (uint8_t) ((EndGame_val[1][sq] * nBlackAttacks + position_val[1][sq]*(TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-        PreEval.ucvlWhitePieces[2][sq] = (uint8_t) ((EndGame_val[2][sq] * nBlackAttacks + position_val[2][sq]*(TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-        PreEval.ucvlBlackPieces[1][sq] = (uint8_t) ((EndGame_val[1][254-sq] * nWhiteAttacks + position_val[1][254-sq]*(TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-        PreEval.ucvlBlackPieces[2][sq] = (uint8_t) ((EndGame_val[2][254-sq] * nWhiteAttacks + position_val[2][254-sq]*(TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-        PreEval.ucvlWhitePieces[6][sq] = (uint8_t) ((ucvlPawnPiecesAttacking[sq] * nWhiteAttacks + ucvlPawnPiecesAttackless[sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-        PreEval.ucvlBlackPieces[6][sq] = (uint8_t) ((ucvlPawnPiecesAttacking[254-sq] * nBlackAttacks + ucvlPawnPiecesAttackless[254-sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlWhitePieces[1][sq] = (uint8_t)((EndGame_val[1][sq] * nBlackAttacks + position_val[1][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlWhitePieces[2][sq] = (uint8_t)((EndGame_val[2][sq] * nBlackAttacks + position_val[2][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlBlackPieces[1][sq] = (uint8_t)((EndGame_val[1][254 - sq] * nWhiteAttacks + position_val[1][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlBlackPieces[2][sq] = (uint8_t)((EndGame_val[2][254 - sq] * nWhiteAttacks + position_val[2][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlWhitePieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[sq] * nWhiteAttacks + ucvlPawnPiecesAttackless[sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlBlackPieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[254 - sq] * nBlackAttacks + ucvlPawnPiecesAttackless[254 - sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
         }
     }
-    // å¯¹ç§°å…ˆä¸å†™
-    // è°ƒæ•´ä¸å—å¨èƒæ–¹å°‘æ‰çš„ä»•(å£«)ç›¸(è±¡)åˆ†å€¼
-    // ä¸è€ƒè™‘å‡å˜
+    // ¶Ô³ÆÏÈ²»Ğ´
+    // µ÷Õû²»ÊÜÍşĞ²·½ÉÙµôµÄÊË(Ê¿)Ïà(Ïó)·ÖÖµ
+    // ²»¿¼ÂÇÉı±ä
     this->valueRed = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nBlackAttacks) / TOTAL_ATTACK_VALUE;
     this->valueBlack = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nWhiteAttacks) / TOTAL_ATTACK_VALUE;
 
-    // å­åŠ›ä½ç½®åˆ†
-    for(int i=16;i<32;i++)
+    // ×ÓÁ¦Î»ÖÃ·Ö
+    for (int i = 16; i < 32; i++)
     {
         sq = this->chessView[i];
-        if(sq!=0)
+        if (sq != 0)
         {
             // __ASSERT_SQUARE(sq);
             // assert(inBoard[sq]);
             this->valueRed += PreEval.ucvlWhitePieces[PieceType[i]][sq];
         }
     }
-    for(int i=32;i<48;i++)
+    for (int i = 32; i < 48; i++)
     {
         sq = this->chessView[i];
-        if(sq!=0)
+        if (sq != 0)
         {
             // __ASSERT_SQUARE(sq);
             // assert(inBoard[sq]);
