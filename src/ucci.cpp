@@ -17,7 +17,7 @@
  * 第三个解释器"BusyLine()"，只用在引擎思考时,没有输入时直接返回"Comm_none"
  */
 
-	const int INPUT_MAX = 8192;
+const int INPUT_MAX = 8192;
 const int MAX_MOVE_NUM = 1024;
 
 #ifdef _WIN32
@@ -76,7 +76,11 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 			UcciComm.position.player = 'r';
 			int i;
+<<<<<<< HEAD
 			for (i = 0; *(UcciComm.position.Fen + i) != ' '; i++) {
+=======
+			for (i = 0;  *(UcciComm.position.Fen + i) != ' '; i++) {
+>>>>>>> 87e8f94bba77108504fa490599eddc8413915dbf
 				if (*(UcciComm.position.Fen + i) != ' ') {
 					UcciComm.position.pos [i] = *(UcciComm.position.Fen + i);
 				}
