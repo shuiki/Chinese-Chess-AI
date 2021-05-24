@@ -6,7 +6,6 @@
 #include"BoardManipulate.h"
 #include"hash.h"
 #include"tools.h"
-//#include"tools.h"
 #include<algorithm>
 const int HASH_SIZE = 1 << 20; // 置换表大小 int64
 const int MAX_GEN_MOVES = 128;
@@ -30,6 +29,35 @@ hash置换表结构体
 //	uint32_t dwLock0, dwLock1;	// Zobrist校验锁
 //	uint16_t BestMove;	//最佳着法
 //};
+
+/******************
+集搜索信息于一体，记录整盘棋搜索得到的结果
+*********************/
+class SearchInfo {
+public:
+	MoveSortStruct mvs;				//根节点着法,目前可以选择的着法
+	HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
+	int nHistoryTable[65536];			// 历史表
+	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
+	int mvResult;			//某一步搜索得到的结果 存储方式：H7-E7	(炮８平５）相当于一个全局变量
+	int alpha, beta;		//beta:本层节点最大值 alpha:上一层节点最大值
+	int vlLast;
+	Board board;                // 待搜索的局面
+	int time;				//限制时间
+	int nUnchanged;
+	bool bQuit;						   // 是否收到退出指令
+	bool bDebug;					   // 是否调试模式
+	bool bStop;				            // 中止信号
+	bool bUseHash, bUseBook;           // 是否使用置换表裁剪和开局库
+	RC4 rc4Random;               // 随机数
+	int nMaxTimer;					   // 最大使用时间
+	char szBookFile[1024];             // 开局库
+	bool CompareHistory(const int lpmv1, const int lpmv2);
+	void ClearHistory();
+	inline void ClearKiller(uint16_t(*lpwmvKiller)[2]);
+	void SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller);
+}searchInfo;
+
 SearchInfo searchInfo;
 extern ZobristTable zobristInfo;
 /**********************
@@ -50,32 +78,7 @@ public:
 	}
 	int Next();
 };
-/******************
-集搜索信息于一体，记录整盘棋搜索得到的结果
-*********************/
-class SearchInfo {
-public:
-	MoveSortStruct mvs;				//根节点着法,目前可以选择的着法
-	HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
-	int nHistoryTable[65536];			// 历史表
-	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
-	int mvResult;			//某一步搜索得到的结果 存储方式：H7-E7	(炮８平５）相当于一个全局变量
-	int alpha, beta;		//beta:本层节点最大值 alpha:上一层节点最大值
-	int vlLast;
-	Board board;                // 待搜索的局面
-	int time;				//限制时间
-	bool bQuit;						   // 是否收到退出指令
-	bool bDebug;					   // 是否调试模式
-	bool bStop;				            // 中止信号
-	bool bUseHash, bUseBook;           // 是否使用置换表裁剪和开局库
-	RC4 rc4Random;               // 随机数
-	int nMaxTimer;					   // 最大使用时间
-	char szBookFile[1024];             // 开局库
-	bool CompareHistory(const int lpmv1, const int lpmv2);
-	void ClearHistory();
-	inline void ClearKiller(uint16_t(*lpwmvKiller)[2]);
-	void SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller);
-}searchInfo;
+
 // "sort"按历史表排序的比较函数.排序方式：越好的越靠后
 bool SearchInfo::CompareHistory(const int lpmv1, const int lpmv2) {
 	return nHistoryTable[lpmv1] < nHistoryTable[lpmv2];
@@ -105,13 +108,13 @@ int MoveSortStruct::Next() {
 		return bestmv;
 	case PHASE_KILLER_1:
 		state = PHASE_KILLER_2;
-		if (mvKiller1 != mvHash && mvKiller1 != 0 && searchInfo.board.LegalMove(mvKiller1)) {
+		if (mvKiller1 != mvHash && mvKiller1 != 0 && searchInfo.board.isLegalMove(mvKiller1)) {
 			return mvKiller1;
 		}
 		// 2. 杀手着法启发(第二个杀手着法)，完成后立即进入下一阶段；
 	case PHASE_KILLER_2:
 		state = AllSearchState;
-		if (mvKiller2 != mvHash && mvKiller2 != 0 && searchInfo.board.LegalMove(mvKiller2)) {
+		if (mvKiller2 != mvHash && mvKiller2 != 0 && searchInfo.board.isLegalMove(mvKiller2)) {
 			return mvKiller2;
 		}
 	case AllSearchState:

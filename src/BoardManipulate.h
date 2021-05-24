@@ -14,8 +14,8 @@ typedef unsigned short int_16;//用来表示move（起点+终点）
 
 enum Player {BLACK,RED,NUL};
 
-const int MAX_MOV_NUM = 256;
-const int MAX_GEN_MVS = 256;
+const int MAX_MOV_NUM = 128;
+const int MAX_GEN_MVS = 128;
 
 /////暂取
 const int MATE_VALUE = 10000;           // 最高分值，即将死的分值
@@ -131,6 +131,20 @@ struct ZobristTable {
 
 ZobristTable Zobrist;
 
+// 初始化Zobrist表
+void InitZobrist(void) {
+	int i, j;
+	RC4 rc4;
+
+	rc4.InitZero();
+	Zobrist.PlayerZobr.initWithRC4(rc4);
+	for (i = 0; i < 14; i++) {
+		for (j = 0; j < 256; j++) {
+			Zobrist.Table[i][j].initWithRC4(rc4);
+		}
+	}
+}
+
 struct MoveStruct {
 	int_16 move;
 	int_8 captured;
@@ -158,6 +172,7 @@ public:
 	int_8 chessBoard[256];//棋盘状态
 	int_8 chessView[48];//每个子的状态
 	int_32 dwBitPiece;
+	int_16 wBitPiece[2];
 	Player player;//玩家
 	MoveStruct pastMoves[MAX_MOV_NUM];//上次吃子以来的历史走法,可用来判断重复
 	int distance;//与根节点的距离
@@ -167,18 +182,23 @@ public:
 	bool checked;//当前被将军标志
 	int valueRed,valueBlack; // 黑棋和红棋的子力价值
 	Board();
-	void refreshBoard(const char* fen, const char* moves, char side);//根据ucci串更新棋盘
+	void refreshBoard(const char* fen, const char* moves, int movNum, char side);//根据ucci串更新棋盘
 	bool isLegalMove(int_16 mv);//判断一步棋是否合法
 	bool isChecked(Player player);//判断某玩家是否被将军
 	int_8 makeMove(int_16 mv);//走一步棋，返回被吃掉的子
 	void undoMakeMove();//撤销上一步棋
-	void NullMove(void) {                       // 走一步空步
+	void nullMove(void) {                       // 走一步空步
 		uint32_t dwKey;
 		dwKey = zobr.key;
 		changeSide();
 		pastMoves[pastMoveNum].Set(0, 0, false, dwKey);
 		pastMoveNum++;
 		distance++;
+	}
+	void undoNullMove(void) {                   // 撤消走一步空步
+		distance--;
+		pastMoveNum--;
+		changeSide();
 	}
 	int genMoves(int_16* mvs,bool captureOnly=false);//生成走法，返回走法数
 	void clearBoard();
@@ -357,6 +377,18 @@ inline int_8 charToPos(char a, char b)
 inline Player rival(Player player)
 {
 	return (Player)(1 - (int)player);
+}
+
+inline int_32 MOVE_COORD(int mv) {      // 把着法转换成字符串
+	union {
+		char c[4];
+		int_32 dw;
+	} Ret;
+	Ret.c[0] = FILE_X(getSRC(mv)) - 3 + 'a';
+	Ret.c[1] = '9' - RANK_Y(getSRC(mv)) + 3;
+	Ret.c[2] = FILE_X(getDST(mv)) - 3 + 'a';
+	Ret.c[3] = '9' - RANK_Y(getDST(mv)) + 3;
+	return Ret.dw;
 }
 
 #endif

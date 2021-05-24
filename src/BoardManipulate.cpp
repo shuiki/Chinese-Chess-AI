@@ -96,7 +96,7 @@ void Board::undoMakeMove()//撤销一步棋，参数是被吃掉的棋子
 }
 
 
-void Board::refreshBoard(const char* fen, const char* moves,char side)//根据ucci串更新棋盘
+void Board::refreshBoard(const char* fen, const char* moves,int movNum, char side)//根据ucci串更新棋盘
 {
 	clearBoard();
 	int_8 boardPos = 51,strPos=0;
@@ -141,7 +141,7 @@ void Board::refreshBoard(const char* fen, const char* moves,char side)//根据uc
 	strPos = 0;
 	int_16 mv;
 	int_8 src, dst;
-	while (moves[strPos] != '\0')
+	for (int i = 0; i < movNum; i++)
 	{
 		src = charToPos(moves[strPos], moves[strPos + 1]);
 		dst= charToPos(moves[strPos+2], moves[strPos + 3]);
@@ -489,10 +489,11 @@ void Board::drawBoard()
 
 //rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR
 //h2e2 h9g7
+/*
 int main()
 {
 	Board myboard;
-	myboard.refreshBoard("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR\0","\0",'r');
+	myboard.refreshBoard("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR\0","h2e2 h9g7 \0",'r');
 	myboard.drawBoard();
 	int_16 mv;
 	int_8 src, dst;
@@ -514,7 +515,7 @@ int main()
 		{
 			printf("%d\n", myboard.genMoves(mvs,true));
 		}
-		else 
+		else
 		{
 			src = charToPos(c[0], c[1]);
 			dst = charToPos(c[2], c[3]);
@@ -532,5 +533,6 @@ int main()
 	system("pause");
 	return 0;
 }
+*/
 
 //h2e2 h9g7

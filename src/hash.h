@@ -39,14 +39,21 @@ void recordHash(const Board&board,int depth,int val,int flag,int_16 mv)
 	HashTable[board.zobr.key & (HASH_SIZE - 1)] = ht;
 }
 
-int probeHash(const Board& board, int depth, int alpha, int beta)
+int probeHash(const Board& board, int depth, int alpha, int beta, int_16& mv)
 {
 	HashStruct ht= HashTable[board.zobr.key & (HASH_SIZE - 1)];
 	if (ht.bestmv == 0)
+	{
+		mv = 0;
 		return -MATE_VALUE;
+	}
 	if (ht.lock_1 != board.zobr.lock_1 || ht.lock_2 != board.zobr.lock_2)
+	{
+		mv = 0;
 		return -MATE_VALUE;
+	}
 	int res = ht.val;
+	mv = ht.bestmv;
 	bool toCheck=false;
 	if (ht.val > WIN_VALUE)
 	{

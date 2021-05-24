@@ -12,7 +12,8 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
 	int vl,vlBest,nHashFlag;
 	int nNewDepth, nCurrTimer;
-	int mvBest, mvHash, mv;
+	int mvBest, mvHash;
+	int_16 mv;
 	MoveSortStruct MoveSort;
 	// 1. 在叶子结点处调用静态搜索；
 	if (depth <= 0)
@@ -26,7 +27,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		return vl;
 	}
 	// 3. 置换裁剪；如果该搜索节点在置换表中出现
-	vl = probeHash(searchInfo.board, alpha, beta, depth);
+	vl = probeHash(searchInfo.board, alpha, beta, depth, mv);
 	if (searchInfo.bUseHash && vl > -MATE_VALUE) {
 		// 由于PV结点不适用置换裁剪，所以不会发生PV路线中断的情况
 		return vl;
@@ -37,9 +38,9 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	}
 	// 5. 尝试空着裁剪；
 	if (bNoNull){ //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
-		searchInfo.board.NullMove();
+		searchInfo.board.nullMove();
 		vl = -SearchPV(depth - NULL_DEPTH - 1 ,-beta, 1 - beta,NO_NULL);
-		searchInfo.board.UndoNullMove();
+		searchInfo.board.undoNullMove();
 
 		if (vl >= beta) {
 			return vl;
@@ -70,7 +71,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 				break;
 			}
 		}
-		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+		nCurrTimer = (int)(GetTime() - searchInfo.time);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
 			searchInfo.bStop = true;
 		}
@@ -100,7 +101,7 @@ int SearchRoot(int depth) {
 	while ((mv = searchInfo.mvs.Next()) != 0) {
 		if (searchInfo.board.makeMove(mv)) {
 			// 3. 尝试选择性延伸(只考虑将军延伸)
-			nNewDepth = (searchInfo.board.isChecked() ? depth : depth - 1);
+			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
 			// 4. 主要变例搜索
 			if (vlBest == -MATE_VALUE) {
 				vl = -SearchPV(-MATE_VALUE, MATE_VALUE, nNewDepth, NO_NULL);
@@ -111,7 +112,7 @@ int SearchRoot(int depth) {
 					vl = -SearchPV(-MATE_VALUE, -vlBest, nNewDepth, NO_NULL);
 				}
 			}
-			searchInfo.board.UndoMakeMove();
+			searchInfo.board.undoMakeMove();
 			if (searchInfo.bStop) {
 				return vlBest;
 			}
@@ -124,7 +125,7 @@ int SearchRoot(int depth) {
 				searchInfo.mvResult = mv;
 			}
 
-			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+			nCurrTimer = (int)(GetTime() - searchInfo.time);
 			if (nCurrTimer > searchInfo.nMaxTimer) {
 				searchInfo.bStop = true;
 			}
@@ -132,7 +133,7 @@ int SearchRoot(int depth) {
 		}
 	}
 	recordHash(searchInfo.board, HASH_PV, vlBest, depth, searchInfo.mvResult);
-	searchInfo.SetBestMove(searchInfo.mvResult, depth, searchInfo.wmvKiller[searchInfo.board.nDistance]);
+	searchInfo.SetBestMove(searchInfo.mvResult, depth, searchInfo.wmvKiller[searchInfo.board.distance]);
 	return vlBest;
 }
 /***********************
@@ -154,7 +155,7 @@ void SearchMain(int depth)
 	int i, vl, vlLast;
 	int nCurrTimer, nLimitTimer;
 	int nBookMoves;
-	BookStruct bks[MAX_GEN_MOVES];
+	//BookStruct bks[MAX_GEN_MOVES];
 	// 主搜索例程包括以下几个步骤：
 
 	// 2. 从开局库中搜索着法
@@ -209,7 +210,7 @@ void SearchMain(int depth)
 	searchInfo.ClearHistory();
 	memset(searchInfo.HashTable, 0, sizeof(searchInfo.HashTable));
 	// 由于 ClearHash() 需要消耗一定时间，所以计时从这以后开始比较合理
-	searchInfo.llTime = GetTime();
+	searchInfo.time = GetTime();
 	vlLast = 0;
 	nCurrTimer = 0;
 
@@ -227,7 +228,7 @@ void SearchMain(int depth)
 			printf("info depth %d score %d\n", i, vl);
 			fflush(stdout);
 		}
-		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+		nCurrTimer = (int)(GetTime() - searchInfo.time);
 		// 7. 如果搜索时间超过适当时限，则终止搜索
 		nLimitTimer = searchInfo.nMaxTimer;
 		// a. 如果当前搜索值没有落后前一层很多，那么适当时限减半
