@@ -1,0 +1,5 @@
+ucci
+isready
+position startpos moves c3c4
+go time 300000 increment 0
+quit

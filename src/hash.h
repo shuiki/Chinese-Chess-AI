@@ -2,7 +2,6 @@
 #ifndef HASH_H
 #define HASH_H
 #include "BoardManipulate.h"
-
 const int HASH_SIZE = 1 << 20;
 const int HASH_ALPHA = 1;
 const int HASH_BETA = 2;
@@ -16,9 +15,10 @@ typedef struct {
 	int val;//¹ÀÖµ
 }HashStruct;
 
-HashStruct HashTable[HASH_SIZE];
-
-void recordHash(const Board&board,int depth,int val,int flag,int_16 mv)
+//extern SearchInfo searchInfo;
+extern HashStruct HashTable[HASH_SIZE];
+//HashStruct* HashTable = searchInfo.HashTable;
+inline void recordHash(const Board&board,int depth,int val,int flag,int_16 mv)
 {
 	HashStruct ht = HashTable[board.zobr.key & (HASH_SIZE - 1)];
 	if (ht.depth > depth)
@@ -39,7 +39,7 @@ void recordHash(const Board&board,int depth,int val,int flag,int_16 mv)
 	HashTable[board.zobr.key & (HASH_SIZE - 1)] = ht;
 }
 
-int probeHash(const Board& board, int depth, int alpha, int beta, int_16& mv)
+inline int probeHash(const Board& board, int depth, int alpha, int beta, int_16& mv)
 {
 	HashStruct ht= HashTable[board.zobr.key & (HASH_SIZE - 1)];
 	if (ht.bestmv == 0)

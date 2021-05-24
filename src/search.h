@@ -1,6 +1,7 @@
 
-#ifndef SEARCH
-#define SEARCH
+
+#ifndef SEARCH_H
+#define SEARCH_H
 
 #include<iostream>
 #include"BoardManipulate.h"
@@ -36,7 +37,7 @@ enum State { HashState, PHASE_KILLER_1, PHASE_KILLER_2, AllSearchState, OdinaryS
 class SearchInfo {
 public:
 	//MoveSortStruct* mvs;				//根节点着法,目前可以选择的着法
-	HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
+	//HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
 	int nHistoryTable[65536];			// 历史表
 	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
 
@@ -58,7 +59,10 @@ public:
 	inline void ClearKiller(uint16_t(*lpwmvKiller)[2]);
 	void SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller);
 
-}searchInfo;
+};
+
+extern HashStruct HashTable[HASH_SIZE];
+extern SearchInfo searchInfo;
 //static struct {
 //	
 //	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
@@ -76,22 +80,23 @@ public:
 		mvHash = mvHash_;
 		mvKiller1 = searchInfo.wmvKiller[searchInfo.board.distance][0];
 		mvKiller2 = searchInfo.wmvKiller[searchInfo.board.distance][1];
-		state = HashState;
+		state = AllSearchState;
 	}
 	int Next();
 };
-MoveSortStruct mvs;
-// "sort"按历史表排序的比较函数.排序方式：越好的越靠后
-bool CompareHistory(const int lpmv1, const int lpmv2) {
-	return searchInfo.nHistoryTable[lpmv1] < searchInfo.nHistoryTable[lpmv2];
-}
-extern ZobristTable zobristInfo;
 /**********************
 * 走法存储排序结构体
 ***********************/
+extern MoveSortStruct mvs;
+// "sort"按历史表排序的比较函数.排序方式：越好的越靠后
+inline bool CompareHistory(const int lpmv1, const int lpmv2) {
+	return searchInfo.nHistoryTable[lpmv1] < searchInfo.nHistoryTable[lpmv2];
+}
+extern ZobristTable zobristInfo;
 
+void SearchMain(int nDepth);
 
-void SearchInfo::ClearHistory() {
+inline void SearchInfo::ClearHistory() {
 	memset(nHistoryTable, 0, 65536 * sizeof(int));
 }
 // 清空杀手着法表
@@ -99,7 +104,7 @@ inline void SearchInfo::ClearKiller(uint16_t(*lpwmvKiller)[2]) {
 	memset(lpwmvKiller, 0, LIMIT_DEPTH * sizeof(uint16_t[2]));
 }
 // 对最佳走法的处理
-void SearchInfo::SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller) {
+inline void SearchInfo::SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller) {
 	nHistoryTable[mv] += nDepth * nDepth;
 	if (lpwmvKiller[0] != mv) {
 		lpwmvKiller[1] = lpwmvKiller[0];
@@ -108,11 +113,11 @@ void SearchInfo::SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller) {
 }
 
 //bool CompareHistory(const int lpmv1, const int lpmv2);
-int MoveSortStruct::Next() {
+inline int MoveSortStruct::Next() {
 	static int index = 0;
 	switch (state) {
 	case HashState:
-		state = AllSearchState;
+		state = PHASE_KILLER_1;
 		return bestmv;
 	case PHASE_KILLER_1:
 		state = PHASE_KILLER_2;
@@ -140,5 +145,5 @@ int MoveSortStruct::Next() {
 	}
 
 }
-void SearchMain(int nDepth);
+
 #endif

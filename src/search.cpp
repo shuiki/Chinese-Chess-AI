@@ -1,4 +1,9 @@
+
 #include"search.h"
+
+MoveSortStruct mvs;
+SearchInfo searchInfo;
+HashStruct HashTable[HASH_SIZE];
 const bool NO_NULL = false; // "SearchPV()"的参数，是否禁止空着裁剪
 // 重复裁剪
 static int RepPruning(const Board& pos, int vlBeta) {
@@ -97,8 +102,8 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	MoveSortStruct MoveSort;
 	// 1. 在叶子结点处调用静态搜索；
 	if (depth <= 0)
-		return searchInfo.board.valueRed - searchInfo.board.valueBlack;
-		//return SearchQuiesc(searchInfo.board, alpha, beta);
+		//return searchInfo.board.valueRed - searchInfo.board.valueBlack;
+		return static_Search(searchInfo.board, alpha, beta);
 		//return Evaluate(searchInfo.board);
 	
 	// 2. 重复裁剪；
@@ -177,7 +182,8 @@ int SearchRoot(int depth) {
 	mvs.Init(searchInfo.mvResult);
 	// 2. 逐一搜索每个着法
 	while ((mv = mvs.Next()) != 0) {
-		if (searchInfo.board.makeMove(mv)) {
+		searchInfo.board.makeMove(mv);
+		if (1) {
 			// 3. 尝试选择性延伸(只考虑将军延伸)
 			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
 			// 4. 主要变例搜索
@@ -287,7 +293,7 @@ void SearchMain(int depth)
 	searchInfo.mvResult = 0;
 	searchInfo.ClearKiller(searchInfo.wmvKiller);
 	searchInfo.ClearHistory();
-	memset(searchInfo.HashTable, 0, sizeof(searchInfo.HashTable));
+	memset(HashTable, 0, sizeof(HashTable));
 	// 由于 ClearHash() 需要消耗一定时间，所以计时从这以后开始比较合理
 	searchInfo.llTime = GetTime();
 	vlLast = 0;
@@ -328,6 +334,7 @@ void SearchMain(int depth)
 
 	}
 	//完成迭代加深搜索，获得结果
+	searchInfo.board.drawBoard();
 	uint32_t result = MOVE_COORD(searchInfo.mvResult);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
 	fflush(stdout);

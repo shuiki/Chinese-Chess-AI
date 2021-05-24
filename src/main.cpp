@@ -46,9 +46,9 @@ int main() {
 }*/
 #include <iostream>
 #include <cstdio>
+#include "search.h"
 #include "ucci.h"
 #include"BoardManipulate.h"
-//#include "search.h"
 using namespace std;
 
 int main() {
@@ -58,6 +58,12 @@ int main() {
 	}
 	printf("%s\n", "ucciok");
 	fflush(stdout);
+	//extern SearchInfo searchInfo;
+	searchInfo.board.distance = 0;
+	searchInfo.bQuit = false;
+	searchInfo.bDebug = true;
+	searchInfo.bUseHash = true;
+	searchInfo.bUseBook = true;
 	while (true) {//!searchInfo.bQuit) {
 		switch (IdleLine(UcciComm, 1)) {//searchInfo.bDebug)) {
 		case Comm_isready:
@@ -65,15 +71,16 @@ int main() {
 			fflush(stdout);
 			break;
 		case Comm_position:
-			//searchInfo.board.refreshBoard(UcciComm.position.pos, UcciComm.position.CoordList, UcciComm.position.Move_Num, UcciComm.position.player);
-			//searchInfo.board.distance = 0;
+
+			searchInfo.board.refreshBoard(UcciComm.position.pos, UcciComm.position.CoordList, UcciComm.position.Move_Num, UcciComm.position.player);
+			searchInfo.board.distance = 0;
 			break;
 		case Comm_go:
-			//searchInfo.nMaxTimer = (int)(0.95 * UcciComm.search.TIME);
-			//SearchMain(MaxDepth);
+			searchInfo.nMaxTimer = (int)(0.95 * UcciComm.search.TIME);
+			SearchMain(MaxDepth);
 			break;
 		case Comm_quit:
-			//searchInfo.bQuit = true;
+			searchInfo.bQuit = true;
 			break;
 		default:
 			break;
