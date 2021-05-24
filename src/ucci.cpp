@@ -17,7 +17,7 @@
  * 第三个解释器"BusyLine()"，只用在引擎思考时,没有输入时直接返回"Comm_none"
  */
 
-	const int INPUT_MAX = 8192;
+const int INPUT_MAX = 8192;
 const int MAX_MOVE_NUM = 1024;
 
 #ifdef _WIN32
