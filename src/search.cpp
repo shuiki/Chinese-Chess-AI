@@ -21,7 +21,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		//return Evaluate(searchInfo.board);
 	
 	// 2. 重复裁剪；
-	//vl = RepPruning(search.board, beta);
+	vl = RepPruning(search.board, beta);
 	if (vl > -MATE_VALUE) {//-MATE_VALUE是重复的特定返回值
 		return vl;
 	}
@@ -67,7 +67,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			{
 				mvBest = mv;
 				nHashFlag = HASH_PV;
-				break;
+				alpha = vl;
 			}
 		}
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
@@ -103,12 +103,12 @@ int SearchRoot(int depth) {
 			nNewDepth = (searchInfo.board.isChecked() ? depth : depth - 1);
 			// 4. 主要变例搜索
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(-MATE_VALUE, MATE_VALUE, nNewDepth, NO_NULL);
+				vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE,NO_NULL);
 			}
 			else {
-				vl = -SearchPV(-vlBest - 1, -vlBest, nNewDepth);
+				vl = -SearchPV(nNewDepth ,-vlBest - 1, -vlBest);
 				if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
-					vl = -SearchPV(-MATE_VALUE, -vlBest, nNewDepth, NO_NULL);
+					vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest,  NO_NULL);
 				}
 			}
 			searchInfo.board.UndoMakeMove();
