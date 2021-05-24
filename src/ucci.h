@@ -1,43 +1,43 @@
 #ifndef UCCI_H
 #define UCCI_H
 
-/* æ–‡ä»¶ï¼šucci.h
+/* ÎÄ¼ş£ºucci.h
  */
-const int MaxDepth = 32; // UCCIå¼•æ“æ€è€ƒæé™æ·±åº¦
+const int MaxDepth = 32; // UCCIÒıÇæË¼¿¼¼«ÏŞÉî¶È
 
 enum CommEnum {
     Comm_none, Comm_ucci,
     Comm_isready, Comm_position,
     Comm_go, Comm_quit
-};  // UCCIæŒ‡ä»¤ç±»å‹
+};  // UCCIÖ¸ÁîÀàĞÍ
 
-// UCCIæŒ‡ä»¤å¯ä»¥è§£é‡Šæˆä»¥ä¸‹è¿™ä¸ªæŠ½è±¡çš„ç»“æ„
+// UCCIÖ¸Áî¿ÉÒÔ½âÊÍ³ÉÒÔÏÂÕâ¸ö³éÏóµÄ½á¹¹
 union UCCIComm {
 
-    /* 1. "position"æŒ‡ä»¤ä¼ é€’çš„ä¿¡æ¯ï¼Œé€‚åˆäº"Comm_position"æŒ‡ä»¤ç±»å‹
-     *    "position"æŒ‡ä»¤ç”¨æ¥è®¾ç½®å±€é¢ï¼ŒåŒ…æ‹¬åˆå§‹å±€é¢è¿åŒåç»­ç€æ³•æ„æˆçš„å±€é¢
-     *    ä¾‹å¦‚ï¼Œposition startpos moves h2e2 h9g8ï¼ŒFENä¸²å°±æ˜¯"startpos"ä»£è¡¨çš„FENä¸²ï¼Œç€æ³•æ•°(Move_Num)å°±æ˜¯2
+    /* 1. "position"Ö¸Áî´«µİµÄĞÅÏ¢£¬ÊÊºÏÓÚ"Comm_position"Ö¸ÁîÀàĞÍ
+     *    "position"Ö¸ÁîÓÃÀ´ÉèÖÃ¾ÖÃæ£¬°üÀ¨³õÊ¼¾ÖÃæÁ¬Í¬ºóĞø×Å·¨¹¹³ÉµÄ¾ÖÃæ
+     *    ÀıÈç£¬position startpos moves h2e2 h9g8£¬FEN´®¾ÍÊÇ"startpos"´ú±íµÄFEN´®£¬×Å·¨Êı(Move_Num)¾ÍÊÇ2
      */
     struct {
-        const char* Fen; // FENä¸²ï¼Œç‰¹æ®Šå±€é¢(å¦‚"startpos"ç­‰)ä¹Ÿç”±è§£é‡Šå™¨æœ€ç»ˆè½¬æ¢æˆFENä¸²
-        int Move_Num;        // åç»­ç€æ³•æ•°
-        char* CoordList;    // åç»­ç€æ³•ï¼ŒæŒ‡å‘ç¨‹åº"IdleLine()"ä¸­çš„ä¸€ä¸ªé™æ€æ•°ç»„ï¼Œä½†å¯ä»¥æŠŠ"CoordList"æœ¬èº«çœ‹æˆæ•°ç»„;
+        const char* Fen; // FEN´®£¬ÌØÊâ¾ÖÃæ(Èç"startpos"µÈ)Ò²ÓÉ½âÊÍÆ÷×îÖÕ×ª»»³ÉFEN´®
+        int Move_Num;        // ºóĞø×Å·¨Êı
+        char* CoordList;    // ºóĞø×Å·¨£¬Ö¸Ïò³ÌĞò"IdleLine()"ÖĞµÄÒ»¸ö¾²Ì¬Êı×é£¬µ«¿ÉÒÔ°Ñ"CoordList"±¾Éí¿´³ÉÊı×é;
         char player;
         char pos[8192];
-        //åç»­è¡”æ¥æ—¶å˜é‡è®°å¾—ä¿®æ”¹
+        //ºóĞøÏÎ½ÓÊ±±äÁ¿¼ÇµÃĞŞ¸Ä
     } position;
 
-    /* 2. "go"æŒ‡ä»¤ä¼ é€’çš„ä¿¡æ¯ï¼Œé€‚åˆäº"e_CommGo"æŒ‡ä»¤ç±»å‹
-     *    "go"æŒ‡ä»¤è®©å¼•æ“æ€è€ƒ(æœç´¢)ï¼ŒåŒæ—¶è®¾å®šæ€è€ƒæ¨¡å¼ï¼Œå³å›ºå®šæ·±åº¦ã€æ—¶æ®µåˆ¶è¿˜æ˜¯åŠ æ—¶åˆ¶
+    /* 2. "go"Ö¸Áî´«µİµÄĞÅÏ¢£¬ÊÊºÏÓÚ"e_CommGo"Ö¸ÁîÀàĞÍ
+     *    "go"Ö¸ÁîÈÃÒıÇæË¼¿¼(ËÑË÷)£¬Í¬Ê±Éè¶¨Ë¼¿¼Ä£Ê½£¬¼´¹Ì¶¨Éî¶È¡¢Ê±¶ÎÖÆ»¹ÊÇ¼ÓÊ±ÖÆ
      */
     struct {
         int TIME;
     }search;
 };
 
-// ä¸‹é¢ä¸‰ä¸ªå‡½æ•°ç”¨æ¥è§£é‡ŠUCCIæŒ‡ä»¤ï¼Œä½†é€‚ç”¨äºä¸åŒåœºåˆ
-CommEnum BootLine(void);                                      // UCCIå¼•æ“å¯åŠ¨çš„ç¬¬ä¸€æ¡æŒ‡ä»¤ï¼Œåªæ¥æ”¶"ucci"
-CommEnum IdleLine(UCCIComm& Command, int /* bool */ Debug); // å¼•æ“ç©ºé—²æ—¶æ¥æ”¶æŒ‡ä»¤
-CommEnum BusyLine(UCCIComm& Command, int /* bool */ Debug);                      // å¼•æ“æ€è€ƒæ—¶æ¥æ”¶æŒ‡ä»¤
+// ÏÂÃæÈı¸öº¯ÊıÓÃÀ´½âÊÍUCCIÖ¸Áî£¬µ«ÊÊÓÃÓÚ²»Í¬³¡ºÏ
+CommEnum BootLine(void);                                      // UCCIÒıÇæÆô¶¯µÄµÚÒ»ÌõÖ¸Áî£¬Ö»½ÓÊÕ"ucci"
+CommEnum IdleLine(UCCIComm& Command, int /* bool */ Debug); // ÒıÇæ¿ÕÏĞÊ±½ÓÊÕÖ¸Áî
+CommEnum BusyLine(UCCIComm& Command, int /* bool */ Debug);                      // ÒıÇæË¼¿¼Ê±½ÓÊÕÖ¸Áî
 
 #endif

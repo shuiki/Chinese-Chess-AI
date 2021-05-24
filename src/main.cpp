@@ -45,6 +45,7 @@ int main() {
 	return 0;
 }*/
 #include <iostream>
+#include  <stdlib.h>
 #include <cstdio>
 #include "search.h"
 #include "ucci.h"
@@ -61,11 +62,11 @@ int main() {
 	//extern SearchInfo searchInfo;
 	searchInfo.board.distance = 0;
 	searchInfo.bQuit = false;
-	searchInfo.bDebug = true;
+	searchInfo.bDebug = !true;
 	searchInfo.bUseHash = true;
 	searchInfo.bUseBook = true;
-	while (true) {//!searchInfo.bQuit) {
-		switch (IdleLine(UcciComm, 1)) {//searchInfo.bDebug)) {
+	while (1) {//!searchInfo.bQuit) {
+		switch (IdleLine(UcciComm, searchInfo.bDebug)) {//searchInfo.bDebug)) {
 		case Comm_isready:
 			printf("%s\n", "readyok");
 			fflush(stdout);
@@ -88,5 +89,8 @@ int main() {
 	}
 	printf("%s\n", "bye");
 	fflush(stdout);
+	system("PAUSE");
+	getchar();
+	getchar();
 	return 0;
 }

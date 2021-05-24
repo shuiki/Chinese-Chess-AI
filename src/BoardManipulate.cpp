@@ -158,6 +158,7 @@ void Board::refreshBoard(const char* fen, const char* moves, int movNum, char si
 		makeMove(mv);
 		strPos += 5;
 	}
+	//drawBoard();
 }
 
 bool Board::isLegalMove(int_16 mv)//判断一步棋是否合法
@@ -513,18 +514,17 @@ int_32 RC4::NextLong(void) {
 	return Ret.dw;
 }
 
-//const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
-//const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
+const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
+const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
 
-/*
+
 inline const char* PIECE_BYTE_IN_CHINESE(int pt, bool type) {
 	if (type == true)
 		return cszPieceBytesInChineseRed[pt];
 	else
 		return cszPieceBytesInChineseBlack[pt];
 }
-*/
-/*
+
 void Board::drawBoard()
 {
 	int i, j, pc;
@@ -546,7 +546,7 @@ void Board::drawBoard()
 	}
 
 }
-*/
+
 
 //rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR
 //h2e2 h9g7

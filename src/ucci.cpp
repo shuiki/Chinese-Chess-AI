@@ -76,7 +76,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 			UcciComm.position.player = 'r';
 			int i;
-			for (i = 0; i < *(UcciComm.position.Fen + i) != ' '; i++) {
+			for (i = 0; *(UcciComm.position.Fen + i) != ' '; i++) {
 				if (*(UcciComm.position.Fen + i) != ' ') {
 					UcciComm.position.pos [i] = *(UcciComm.position.Fen + i);
 				}
@@ -90,17 +90,21 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			UcciComm.position.Fen = lp;
 			int l; int space_num = 0;
 			for (l = 0; space_num < 2; lp++, l++) {
-				if (*lp != ' ') {
+				if (*lp != ' '|| *lp == '\n') {
 					if (space_num == 0) {
 						UcciComm.position.pos [l] = *lp;
 					}
 					else if (space_num == 1)
 						UcciComm.position.player = *lp;
 				}
-				else if (*lp == ' ')
+				else if (*lp == ' '|| *lp == '\n')
 					space_num++;
 			}
+			/*printf_s("******: %s", UcciComm.position.pos);
+			fflush(stdout);
+			system("pause");*/
 			UcciComm.position.pos [l] = '\0';
+			
 			lp += 7;
 		}
 		// 如果两者都不是，就立即返回

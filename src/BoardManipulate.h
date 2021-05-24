@@ -198,7 +198,7 @@ public:
 			((nRepStatus & 4) == 0 ? 0 : MATE_VALUE - distance);
 		return vlReturn == 0 ? DrawValue() : vlReturn;
 	}
-
+	void drawBoard();
 
 private:
 	void addPiece(int_8 pos, int_8 piece);

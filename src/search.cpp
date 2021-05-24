@@ -66,17 +66,23 @@ static int static_Search(Board& pos, int Alpha, int Beta) {
 	}
 	// 7. 用Alpha-Beta算法搜索这些着法；
 	for (int i = 0; i < nGenMoves; i++) {
-		if (pos.makeMove(mvs[i])) {
-			vl = -static_Search(pos, -Beta, -Alpha);
+		pos.makeMove(mvs[i]);
+		//若被将军则不尝试
+		if (pos.isChecked(pos.player))
+		{
 			pos.undoMakeMove();
-			if (vl > vlBest) {
-				if (vl >= Beta) {
-					return vl;
-				}
-				vlBest = vl;
-				Alpha = max(vl, Alpha);
-			}
+			continue;
 		}
+		vl = -static_Search(pos, -Beta, -Alpha);
+		pos.undoMakeMove();
+		if (vl > vlBest) {
+			if (vl >= Beta) {
+				return vl;
+			}
+			vlBest = vl;
+			Alpha = max(vl, Alpha);
+		}
+		
 	}
 	// 8. 返回分值。
 	if (vlBest == -MATE_VALUE) {
@@ -137,23 +143,28 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
 	while ((mv = MoveSort.Next()) != 0) {
-		if (searchInfo.board.makeMove(mv))//不是被将着法，则尝试走
+		searchInfo.board.makeMove(mv);
+		//若被将军则不尝试
+		if (searchInfo.board.isChecked(searchInfo.board.player))
 		{
-			int value = -SearchPV(depth - 1, -beta, -alpha);
 			searchInfo.board.undoMakeMove();
-			if (value > beta) {
-				mvBest = mv;
-				nHashFlag = HASH_BETA;
-				break;
-			}
-				
-			if (value > alpha)
-			{
-				mvBest = mv;
-				nHashFlag = HASH_PV;
-				alpha = vl;
-			}
+			continue;
 		}
+		int value = -SearchPV(depth - 1, -beta, -alpha);
+		searchInfo.board.undoMakeMove();
+		if (value > beta) {
+			mvBest = mv;
+			nHashFlag = HASH_BETA;
+			break;
+		}
+				
+		if (value > alpha)
+		{
+			mvBest = mv;
+			nHashFlag = HASH_PV;
+			alpha = vl;
+		}
+		
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
 			searchInfo.bStop = true;
@@ -183,39 +194,45 @@ int SearchRoot(int depth) {
 	// 2. 逐一搜索每个着法
 	while ((mv = mvs.Next()) != 0) {
 		searchInfo.board.makeMove(mv);
-		if (1) {
-			// 3. 尝试选择性延伸(只考虑将军延伸)
-			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
-			// 4. 主要变例搜索
-			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE,NO_NULL);
-			}
-			else {
-				vl = -SearchPV(nNewDepth ,-vlBest - 1, -vlBest);
-				if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
-					vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest,  NO_NULL);
-				}
-			}
+		//若被将军则不尝试
+		if (searchInfo.board.isChecked(searchInfo.board.player))
+		{
 			searchInfo.board.undoMakeMove();
-			if (searchInfo.bStop) {
-				return vlBest;
+			continue;
+		}
+		// 3. 尝试选择性延伸(只考虑将军延伸)
+		nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
+		// 4. 主要变例搜索
+		if (vlBest == -MATE_VALUE) {
+			vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE,NO_NULL);
+		}
+		else {
+			vl = -SearchPV(nNewDepth ,-vlBest - 1, -vlBest);
+			if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
+				vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest,  NO_NULL);
 			}
-			// 5. Alpha-Beta边界判定("vlBest"代替了"SearchPV()"中的"vlAlpha")
-			if (vl > vlBest) {
-				// 6. 如果搜索到第一着法，那么"未改变最佳着法"的计数器加1，否则清零
-				searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
-				vlBest = vl;
-				// 7. 搜索到最佳着法时记录主要变例
-				searchInfo.mvResult = mv;
-			}
+		}
+		searchInfo.board.undoMakeMove();
+		if (searchInfo.bStop) {
+			return vlBest;
+		}
+		// 5. Alpha-Beta边界判定("vlBest"代替了"SearchPV()"中的"vlAlpha")
+		if (vl > vlBest) {
+			// 6. 如果搜索到第一着法，那么"未改变最佳着法"的计数器加1，否则清零
+			searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
+			vlBest = vl;
+			// 7. 搜索到最佳着法时记录主要变例
+			searchInfo.mvResult = mv;
+		}
 
-			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-			if (nCurrTimer > searchInfo.nMaxTimer) {
-				searchInfo.bStop = true;
-			}
-
+		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+		if (nCurrTimer > searchInfo.nMaxTimer) {
+			searchInfo.bStop = true;
 		}
 	}
+	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
+	fflush(stdout);
+	searchInfo.board.drawBoard();*/
 	recordHash(searchInfo.board, depth, vlBest, HASH_PV, searchInfo.mvResult);
 	searchInfo.SetBestMove(searchInfo.mvResult, depth, searchInfo.wmvKiller[searchInfo.board.distance]);
 	return vlBest;
@@ -298,7 +315,7 @@ void SearchMain(int depth)
 	searchInfo.llTime = GetTime();
 	vlLast = 0;
 	nCurrTimer = 0;
-
+	
 	// 5. 做迭代加深搜索
 	for (i = 1; i <= depth; i++) {
 		// 6. 搜索根结点
@@ -334,8 +351,14 @@ void SearchMain(int depth)
 
 	}
 	//完成迭代加深搜索，获得结果
-	searchInfo.board.drawBoard();
+	//searchInfo.board.drawBoard();
+	/*printf("SSSSSSSSSSSSSSSSSSS:after\n");
+	fflush(stdout);
+	searchInfo.board.drawBoard();*/
+	searchInfo.board.makeMove(searchInfo.mvResult);
 	uint32_t result = MOVE_COORD(searchInfo.mvResult);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
 	fflush(stdout);
+	if (searchInfo.bDebug)
+		searchInfo.board.drawBoard();
 }
