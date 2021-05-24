@@ -1,4 +1,12 @@
 #include <iostream>
+#include <sys/timeb.h>
+
+
+inline int64_t GetTime() {
+    timeb tb;
+    ftime(&tb);
+    return (int64_t)tb.time * 1000 + tb.millitm;
+}
 
 const int SimpleValues[48] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
