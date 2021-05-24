@@ -9,12 +9,12 @@
 #include "ucci.h"  
 #pragma comment(lib, "Shlwapi.lib")
 
-/*ÎÄ¼ş£ºucci.cpp
+/*æ–‡ä»¶ï¼šucci.cpp
  *
- * ÆäÖĞµÚÒ»¸ö½âÊÍÆ÷"BootLine()"½ÓÊÕÒıÇæÆô¶¯ºóµÄµÚÒ»ĞĞÖ¸Áî
- * ÊäÈë"ucci"£¬·µ»Ø"Comm_ucci"£¬ÆäËû·µ»Ø"Comm_none"
- * Ç°Á½¸ö½âÊÍÆ÷µÈ´ıÊÇ·ñÓĞÊäÈë£¬ÈôÃ»ÓĞÊäÈëÔòÖ´ĞĞ´ı»úÖ¸Áî"Idle()"
- * µÚÈı¸ö½âÊÍÆ÷"BusyLine()"£¬Ö»ÓÃÔÚÒıÇæË¼¿¼Ê±,Ã»ÓĞÊäÈëÊ±Ö±½Ó·µ»Ø"Comm_none"
+ * å…¶ä¸­ç¬¬ä¸€ä¸ªè§£é‡Šå™¨"BootLine()"æ¥æ”¶å¼•æ“å¯åŠ¨åçš„ç¬¬ä¸€è¡ŒæŒ‡ä»¤
+ * è¾“å…¥"ucci"ï¼Œè¿”å›"Comm_ucci"ï¼Œå…¶ä»–è¿”å›"Comm_none"
+ * å‰ä¸¤ä¸ªè§£é‡Šå™¨ç­‰å¾…æ˜¯å¦æœ‰è¾“å…¥ï¼Œè‹¥æ²¡æœ‰è¾“å…¥åˆ™æ‰§è¡Œå¾…æœºæŒ‡ä»¤"Idle()"
+ * ç¬¬ä¸‰ä¸ªè§£é‡Šå™¨"BusyLine()"ï¼Œåªç”¨åœ¨å¼•æ“æ€è€ƒæ—¶,æ²¡æœ‰è¾“å…¥æ—¶ç›´æ¥è¿”å›"Comm_none"
  */
 
 	const int INPUT_MAX = 8192;
@@ -35,7 +35,7 @@ inline void Idle(void) {
 }
 #endif
 
-//ÊÕÒıÇæÆô¶¯ºóµÄµÚÒ»ĞĞÖ¸Áî,Èç¹ûÊÇucci£¬Ôò·µ»ØComm_ucci
+//æ”¶å¼•æ“å¯åŠ¨åçš„ç¬¬ä¸€è¡ŒæŒ‡ä»¤,å¦‚æœæ˜¯ucciï¼Œåˆ™è¿”å›Comm_ucci
 CommEnum BootLine(void)
 {
 	char Line_Str[INPUT_MAX];
@@ -48,14 +48,14 @@ CommEnum BootLine(void)
 		return Comm_none;
 }
 
-//"IdleLine()"ÊÇ×î¸´ÔÓµÄUCCIÖ¸Áî½âÊÍÆ÷£¬´ó¶àÊıµÄUCCIÖ¸Áî¶¼ÓÉËüÀ´½âÊÍ
+//"IdleLine()"æ˜¯æœ€å¤æ‚çš„UCCIæŒ‡ä»¤è§£é‡Šå™¨ï¼Œå¤§å¤šæ•°çš„UCCIæŒ‡ä»¤éƒ½ç”±å®ƒæ¥è§£é‡Š
 CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 {
-	//Èç¹ûbDebugÖ¸ÁîÎª1£¬Êä³öµ±Ç°¶Áµ½µÄÖ¸Áî
+	//å¦‚æœbDebugæŒ‡ä»¤ä¸º1ï¼Œè¾“å‡ºå½“å‰è¯»åˆ°çš„æŒ‡ä»¤
 	char Line_Str[INPUT_MAX];
 	char* lp;
 	while (!std::cin.getline(Line_Str, INPUT_MAX)) {
-		//ÊäÈëÒ»¸öÖ¸Áî
+		//è¾“å…¥ä¸€ä¸ªæŒ‡ä»¤
 		Idle();
 	}
 	lp = Line_Str;
@@ -63,12 +63,12 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 		printf("info idleline [%s]\n", lp);
 		fflush(stdout);
 	}
-	// 1. "isready"Ö¸Áî
+	// 1. "isready"æŒ‡ä»¤
 	if (strcmp(lp, "isready") == 0) {
 		return Comm_isready;
 	}
-	// 2. "position {<special_position> | fen <fen_string>} [moves <move_list>]"Ö¸Áî
-	//Èç¹û¶Áµ½positionÖ¸Áî£¬×Å·¨ÁĞ±í±£´æÔÚUcciCommÀï
+	// 2. "position {<special_position> | fen <fen_string>} [moves <move_list>]"æŒ‡ä»¤
+	//å¦‚æœè¯»åˆ°positionæŒ‡ä»¤ï¼Œç€æ³•åˆ—è¡¨ä¿å­˜åœ¨UcciCommé‡Œ
 	else if (strncmp(lp, "position ", 9) == 0) {
 		lp += 9;
 		if (strncmp(lp, "startpos", 8) == 0) {
@@ -78,13 +78,13 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			int i;
 			for (i = 0; i < *(UcciComm.position.Fen + i) != ' '; i++) {
 				if (*(UcciComm.position.Fen + i) != ' ') {
-					*(UcciComm.position.pos + i) = *(UcciComm.position.Fen + i);
+					UcciComm.position.pos [i] = *(UcciComm.position.Fen + i);
 				}
 			}
-			*(UcciComm.position.pos + i) = '\0';
+			UcciComm.position.pos[i] = '\0';
 
 		}
-		// È»ºóÅĞ¶ÏÊÇ·ñÖ¸¶¨ÁËFEN´®
+		// ç„¶ååˆ¤æ–­æ˜¯å¦æŒ‡å®šäº†FENä¸²
 		else if (strncmp(lp, "fen ", 4) == 0) {
 			lp += 4;
 			UcciComm.position.Fen = lp;
@@ -92,7 +92,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			for (l = 0; space_num < 2; lp++, l++) {
 				if (*lp != ' ') {
 					if (space_num == 0) {
-						*(UcciComm.position.pos + l) = *lp;
+						UcciComm.position.pos [l] = *lp;
 					}
 					else if (space_num == 1)
 						UcciComm.position.player = *lp;
@@ -100,24 +100,24 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 				else if (*lp == ' ')
 					space_num++;
 			}
-			*(UcciComm.position.pos + l) = '\0';
+			UcciComm.position.pos [l] = '\0';
 			lp += 7;
 		}
-		// Èç¹ûÁ½Õß¶¼²»ÊÇ£¬¾ÍÁ¢¼´·µ»Ø
+		// å¦‚æœä¸¤è€…éƒ½ä¸æ˜¯ï¼Œå°±ç«‹å³è¿”å›
 		else {
 			return Comm_none;
 		}
-		// È»ºóÑ°ÕÒÊÇ·ñÖ¸¶¨ÁËºóĞø×Å·¨£¬¼´ÊÇ·ñÓĞ"moves"¹Ø¼ü×Ö
+		// ç„¶åå¯»æ‰¾æ˜¯å¦æŒ‡å®šäº†åç»­ç€æ³•ï¼Œå³æ˜¯å¦æœ‰"moves"å…³é”®å­—
 		if (strncmp(lp, " moves ", 7) == 0) {
-			//ÂÔ¹ı" moves "
+			//ç•¥è¿‡" moves "
 			lp += 7;
-			UcciComm.position.Move_Num = min((int)(strlen(lp) + 1) / 5, MAX_MOVE_NUM); 	// "moves"ºóÃæµÄÃ¿¸ö×Å·¨¶¼ÊÇ1¸ö¿Õ¸ñºÍ4¸ö×Ö·û
+			UcciComm.position.Move_Num = min((int)(strlen(lp) + 1) / 5, MAX_MOVE_NUM); 	// "moves"åé¢çš„æ¯ä¸ªç€æ³•éƒ½æ˜¯1ä¸ªç©ºæ ¼å’Œ4ä¸ªå­—ç¬¦
 			UcciComm.position.CoordList = lp;
 			return Comm_position;
 		}
 		return Comm_position;
 	}
-	// 3. "go [ponder | draw] <mode>"Ö¸Áî
+	// 3. "go [ponder | draw] <mode>"æŒ‡ä»¤
 	else if (strncmp(lp, "go time ", 8) == 0) {
 		lp += 8;
 		int nRet = 0, nt = 0;
@@ -131,17 +131,17 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			UcciComm.search.TIME = 0;
 		return Comm_go;
 	}
-	// 4. "quit"Ö¸Áî
+	// 4. "quit"æŒ‡ä»¤
 	else if (strcmp(lp, "quit") == 0) {
 		return Comm_quit;
 	}
-	// 5. ÎŞ·¨Ê¶±ğµÄÖ¸Áî
+	// 5. æ— æ³•è¯†åˆ«çš„æŒ‡ä»¤
 	else {
 		return Comm_none;
 	}
 }
 
-//µÚÈı¸ö½âÊÍÆ÷Ö»ÓÃÔÚÒıÇæË¼¿¼Ê±£¬Ã»ÓĞÊäÈëÊ±Ö±½Ó·µ»Ø"Comm_none"
+//ç¬¬ä¸‰ä¸ªè§£é‡Šå™¨åªç”¨åœ¨å¼•æ“æ€è€ƒæ—¶ï¼Œæ²¡æœ‰è¾“å…¥æ—¶ç›´æ¥è¿”å›"Comm_none"
 CommEnum BusyLine(UCCIComm& UcciComm, int bDebug)
 {
 	char Line_Str[INPUT_MAX];
@@ -150,7 +150,7 @@ CommEnum BusyLine(UCCIComm& UcciComm, int bDebug)
 		if (bDebug) {
 			printf("info busyline [%s]\n", Line_Str);
 			fflush(stdout);
-			// "BusyLine"Ö»ÄÜ½ÓÊÕ"isready"¡¢"quit"ÕâÁ½ÌõÖ¸Áî
+			// "BusyLine"åªèƒ½æ¥æ”¶"isready"ã€"quit"è¿™ä¸¤æ¡æŒ‡ä»¤
 			if (strcmp(Line_Str, "isready") == 0) {
 				return Comm_isready;
 			}
