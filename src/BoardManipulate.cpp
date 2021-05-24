@@ -2,6 +2,10 @@
 
 using namespace std;
 
+RC4 rander;
+ZobristTable Zobrist;
+PreEvalStruct PreEval;
+
 Board::Board()
 {
 	memset(chessBoard,0,sizeof(int_8)*256);
@@ -461,15 +465,66 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//生成走法，返回走法�
 	return mvNum;
 }
 
-const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
-const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
+void InitZobrist(void) {
+	int i, j;
+	RC4 rc4;
 
+	rc4.InitZero();
+	Zobrist.PlayerZobr.initWithRC4(rc4);
+	for (i = 0; i < 14; i++) {
+		for (j = 0; j < 256; j++) {
+			Zobrist.Table[i][j].initWithRC4(rc4);
+		}
+	}
+}
+
+void RC4::InitZero(void) {
+	int i, j;
+	int_8 uc;
+
+	x = y = j = 0;
+	for (i = 0; i < 256; i++) {
+		s[i] = i;
+	}
+	for (i = 0; i < 256; i++) {
+		j = (j + s[i]) & 255;
+		uc = s[i];
+		s[i] = s[j];
+		s[j] = uc;
+	}
+}
+
+int_8 RC4::NextByte(void) {
+	x = (x + 1) & 255;
+	y = (y + s[x]) & 255;
+	std::swap(s[x], s[y]);
+	return s[(s[x] + s[y]) & 255];
+}
+
+int_32 RC4::NextLong(void) {
+	union {
+		int_8 uc[4];
+		int_32 dw;
+	} Ret;
+	Ret.uc[0] = NextByte();
+	Ret.uc[1] = NextByte();
+	Ret.uc[2] = NextByte();
+	Ret.uc[3] = NextByte();
+	return Ret.dw;
+}
+
+//const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
+//const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
+
+/*
 inline const char* PIECE_BYTE_IN_CHINESE(int pt, bool type) {
 	if (type == true)
 		return cszPieceBytesInChineseRed[pt];
 	else
 		return cszPieceBytesInChineseBlack[pt];
 }
+*/
+/*
 void Board::drawBoard()
 {
 	int i, j, pc;
@@ -489,8 +544,9 @@ void Board::drawBoard()
 		}
 		printf("\n");
 	}
-	
+
 }
+*/
 
 //rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR
 //h2e2 h9g7

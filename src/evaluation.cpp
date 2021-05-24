@@ -2,7 +2,6 @@
 #include <cstring>
 #include <algorithm>
 #include "BoardManipulate.h"
-#include "tools.h"
 using namespace std;
 
 // 各种子力的屏蔽位

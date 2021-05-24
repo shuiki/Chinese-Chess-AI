@@ -7,8 +7,6 @@
 #include"hash.h"
 #include"tools.h"
 #include<algorithm>
-const int HASH_SIZE = 1 << 20; // 置换表大小 int64
-const int MAX_GEN_MOVES = 128;
 const int LIMIT_DEPTH = 64;       // 搜索的极限深度
 const int SORT_VALUE_MAX = 65535; // 着法序列最大值
 const int NULL_DEPTH = 2;    // 空着裁剪的深度
@@ -33,6 +31,23 @@ hash置换表结构体
 /******************
 集搜索信息于一体，记录整盘棋搜索得到的结果
 *********************/
+enum State { HashState, PHASE_KILLER_1, PHASE_KILLER_2, AllSearchState, OdinaryState };
+
+extern SearchInfo searchInfo;
+class MoveSortStruct {
+public:
+	uint16_t mvs[MAX_GEN_MVS];           // 所有的走法
+	int bestmv;	//计算出来的最好走法
+	State state;
+	int mvHash, mvKiller1, mvKiller2; // 置换表走法和两个杀手走法
+	void Init(int mvHash_) { // 初始化，设定置换表走法和两个杀手走法
+		mvHash = mvHash_;
+		mvKiller1 = searchInfo.wmvKiller[searchInfo.board.distance][0];
+		mvKiller2 = searchInfo.wmvKiller[searchInfo.board.distance][1];
+		state = HashState;
+	}
+	int Next();
+};
 class SearchInfo {
 public:
 	MoveSortStruct mvs;				//根节点着法,目前可以选择的着法
@@ -56,28 +71,11 @@ public:
 	void ClearHistory();
 	inline void ClearKiller(uint16_t(*lpwmvKiller)[2]);
 	void SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller);
-}searchInfo;
-
-SearchInfo searchInfo;
+};
 extern ZobristTable zobristInfo;
 /**********************
 * 走法存储排序结构体
 ***********************/
-enum State { HashState, PHASE_KILLER_1, PHASE_KILLER_2,AllSearchState, OdinaryState };
-class MoveSortStruct {
-public:
-	uint16_t mvs[MAX_GEN_MOVES];           // 所有的走法
-	int bestmv;	//计算出来的最好走法
-	State state;
-	int mvHash, mvKiller1, mvKiller2; // 置换表走法和两个杀手走法
-	void Init(int mvHash_) { // 初始化，设定置换表走法和两个杀手走法
-		mvHash = mvHash_;
-		mvKiller1 = searchInfo.wmvKiller[searchInfo.board.distance][0];
-		mvKiller2 = searchInfo.wmvKiller[searchInfo.board.distance][1];
-		state = HashState;
-	}
-	int Next();
-};
 
 // "sort"按历史表排序的比较函数.排序方式：越好的越靠后
 bool SearchInfo::CompareHistory(const int lpmv1, const int lpmv2) {
@@ -132,5 +130,5 @@ int MoveSortStruct::Next() {
 	}
 
 }
-
+void SearchMain(int nDepth);
 #endif

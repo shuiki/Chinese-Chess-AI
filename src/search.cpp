@@ -8,6 +8,16 @@ beta:本层节点最小值 alpha:上一层节点值
 散列项里到底要保存什么值，并且当你要获取它时怎样来做。
 答案是储存一个值，另加一个标志来说明这个值是什么含义。
 **********************/
+
+// 重复裁剪
+static int RepPruning(const Board& pos, int vlBeta) {
+	int vlRep = pos.RepStatus(1);
+	if (vlRep > 0) {
+		return pos.RepValue(vlRep);
+	}
+	return -MATE_VALUE;
+}
+
 static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
 	int vl,vlBest,nHashFlag;
@@ -136,6 +146,81 @@ int SearchRoot(int depth) {
 	searchInfo.SetBestMove(searchInfo.mvResult, depth, searchInfo.wmvKiller[searchInfo.board.distance]);
 	return vlBest;
 }
+/*********
+***********
+***********/
+// MVV/LVA每种子力的价值
+
+static int cucMvvLva[24] = {
+  0, 0, 0, 0, 0, 0, 0, 0,
+  5, 1, 1, 3, 4, 3, 2, 0,
+  5, 1, 1, 3, 4, 3, 2, 0
+};
+inline int MvvLva(int mv) 
+{
+	return (cucMvvLva[searchInfo.board.chessBoard[getDST(mv)]] << 3) - cucMvvLva[searchInfo.board.chessBoard[getSRC(mv)]];
+}
+
+bool CompareMvvLva(const int lpmv1, const int lpmv2) {
+	return MvvLva(lpmv1) > MvvLva(lpmv2);
+}
+/*******
+***********
+***********************/
+// 静态搜索过程
+static int static_Search(Board& pos, int Alpha, int Beta) {
+	int vlBest, vl, nGenMoves;
+	int_16 mvs[MAX_GEN_MVS];
+	// 1. 重复裁剪；
+	vl = RepPruning(pos, Beta);
+	if (vl > -MATE_VALUE) {
+		return vl;
+	}
+	// 2. 达到极限深度，直接返回评价值；
+	if (pos.distance == LIMIT_DEPTH) {
+		return  pos.Evaluate();
+	}
+	// 3. 初始化；
+	vlBest = -MATE_VALUE;
+	// 4. 对于被将军的局面，生成全部着法；
+	if (pos.isChecked(pos.player)) {
+		nGenMoves = pos.genMoves(mvs);
+		std::sort(mvs, mvs + nGenMoves, SearchInfo::CompareHistory);
+	}
+	else {
+		// 5. 对于未被将军的局面，在生成着法前首先尝试空着(空着启发)，即对局面作评价；
+		vl = pos.Evaluate();
+		if (vl >= Beta) {
+			return vl;
+		}
+		vlBest = vl;
+		Alpha = max(vl, Alpha);
+		// 6. 对于未被将军的局面，生成并排序所有吃子着法(MVV(LVA)启发)；
+		nGenMoves = pos.genMoves(mvs, true);
+		std::sort(mvs, mvs + nGenMoves,CompareMvvLva);
+	}
+	// 7. 用Alpha-Beta算法搜索这些着法；
+	for (int i = 0; i < nGenMoves; i++) {
+		if (pos.makeMove(mvs[i])) {
+			vl = -static_Search(pos, -Beta, -Alpha);
+			pos.undoMakeMove();
+			if (vl > vlBest) {
+				if (vl >= Beta) {
+					return vl;
+				}
+				vlBest = vl;
+				Alpha = max(vl, Alpha);
+			}
+		}
+	}
+	// 8. 返回分值。
+	if (vlBest == -MATE_VALUE) {
+		return pos.distance - MATE_VALUE;
+	}
+	else {
+		return vlBest;
+	}
+}
 /***********************
 主搜索函数
 思路：迭代加深搜索:主要深度优先遍历，利用已知结果
@@ -193,7 +278,7 @@ void SearchMain(int depth)
 
 	// 3. 如果深度为零则返回静态搜索值
 	if (depth == 0) {
-		vl = SearchQuiesc(searchInfo.board, -MATE_VALUE, MATE_VALUE);
+		vl = static_Search(searchInfo.board, -MATE_VALUE, MATE_VALUE);
 		//		vl = Evaluate(searchInfo.board);
 		if (searchInfo.bDebug) {
 			printf("info depth 0 score %d\n", vl);
