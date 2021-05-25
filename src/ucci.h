@@ -24,6 +24,7 @@ union UCCIComm {
         char* CoordList;    // 后续着法，指向程序"IdleLine()"中的一个静态数组，但可以把"CoordList"本身看成数组;
         char player;
         char pos[8192];
+        int posLen;
         //后续衔接时变量记得修改
     } position;
 

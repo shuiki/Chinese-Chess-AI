@@ -356,9 +356,11 @@ void SearchMain(int depth)
 	fflush(stdout);
 	searchInfo.board.drawBoard();*/
 	searchInfo.board.makeMove(searchInfo.mvResult);
-	uint32_t result = MOVE_COORD(searchInfo.mvResult);//将结果转化为可输出字符串 int->char*
+	char result[4];
+	MOVE_COORD(searchInfo.mvResult,result);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
 	fflush(stdout);
 	if (searchInfo.bDebug)
 		searchInfo.board.drawBoard();
 }
+//position fen rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r - - 0 1 moves h2e2 h9g7

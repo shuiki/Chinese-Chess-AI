@@ -66,6 +66,44 @@ const int LegalSpan[100] = {//标志将17、士18、相19、马的可行性
 	0,0,0,0,19,16,0,16,19,0,
 };
 
+static const bool InBoard[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const bool InFort[256] = {
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
 const int PieceType[48] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 6,
@@ -146,7 +184,7 @@ public:
 	bool checked;//当前被将军标志
 	int valueRed, valueBlack; // 黑棋和红棋的子力价值
 	Board();
-	void refreshBoard(const char* fen, const char* moves, int movNum, char side);//根据ucci串更新棋盘
+	void refreshBoard(const char* fen, int posLen,const char* moves, int movNum, char side);//根据ucci串更新棋盘
 	bool isLegalMove(int_16 mv);//判断一步棋是否合法
 	bool isChecked(Player player);//判断某玩家是否被将军
 	int_8 makeMove(int_16 mv);//走一步棋，返回被吃掉的子
@@ -224,17 +262,12 @@ inline int getY(int pos)
 
 inline bool inBoard(int pos)//位于棋盘中
 {
-	return (pos >= 51) && (pos <= 203);
+	return InBoard[pos];
 }
 
 inline bool inBox(int pos, Player player)//位于某方的小九宫格中
 {
-	switch (player) {
-	case(BLACK):
-		return pos >= 54 && pos <= 88;
-	case(RED):
-		return pos >= 163 && pos <= 200;
-	}
+	return InFort[pos];
 }
 
 inline int_8 getDST(int_16 mv)//一步的终点
@@ -354,16 +387,11 @@ inline Player rival(Player player)
 	return (Player)(1 - (int)player);
 }
 
-inline int_32 MOVE_COORD(int mv) {      // 把着法转换成字符串
-	union {
-		char c[4];
-		int_32 dw;
-	} Ret;
-	Ret.c[0] = FILE_X(getSRC(mv)) - 3 + 'a';
-	Ret.c[1] = '9' - RANK_Y(getSRC(mv)) + 3;
-	Ret.c[2] = FILE_X(getDST(mv)) - 3 + 'a';
-	Ret.c[3] = '9' - RANK_Y(getDST(mv)) + 3;
-	return Ret.dw;
+inline void MOVE_COORD(int mv,char* rslt) {      // 把着法转换成字符串
+	rslt[0] = FILE_X(getSRC(mv)) - 3 + 'a';
+	rslt[1] = '9' - RANK_Y(getSRC(mv)) + 3;
+	rslt[2] = FILE_X(getDST(mv)) - 3 + 'a';
+	rslt[3] = '9' - RANK_Y(getDST(mv)) + 3;
 }
 
 #endif

@@ -76,16 +76,13 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 			UcciComm.position.player = 'r';
 			int i;
-<<<<<<< HEAD
 			for (i = 0; *(UcciComm.position.Fen + i) != ' '; i++) {
-=======
-			for (i = 0;  *(UcciComm.position.Fen + i) != ' '; i++) {
->>>>>>> 87e8f94bba77108504fa490599eddc8413915dbf
 				if (*(UcciComm.position.Fen + i) != ' ') {
 					UcciComm.position.pos [i] = *(UcciComm.position.Fen + i);
 				}
 			}
-			UcciComm.position.pos[i] = '\0';
+			UcciComm.position.posLen = i;
+			//UcciComm.position.pos[i] = '\0';
 
 		}
 		// 然后判断是否指定了FEN串
@@ -108,7 +105,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			fflush(stdout);
 			system("pause");*/
 			UcciComm.position.pos [l] = '\0';
-			
+			UcciComm.position.posLen = l;
 			lp += 7;
 		}
 		// 如果两者都不是，就立即返回
@@ -126,7 +123,8 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 		return Comm_position;
 	}
 	// 3. "go [ponder | draw] <mode>"指令
-	else if (strncmp(lp, "go time ", 8) == 0) {
+	else if (strncmp(lp, "go time ", 8) == 0) 
+	{
 		lp += 8;
 		int nRet = 0, nt = 0;
 		if (sscanf_s(lp, "%d", &nRet) > 0) {

@@ -105,7 +105,7 @@ void Board::undoMakeMove()//撤销一步棋，参数是被吃掉的棋子
 }
 
 
-void Board::refreshBoard(const char* fen, const char* moves, int movNum, char side)//根据ucci串更新棋盘
+void Board::refreshBoard(const char* fen, int posLen,const char* moves, int movNum, char side)//根据ucci串更新棋盘
 {
 	clearBoard();
 	int_8 boardPos = 51, strPos = 0;
@@ -115,7 +115,7 @@ void Board::refreshBoard(const char* fen, const char* moves, int movNum, char si
 		player = RED;
 	else if (side == 'b')
 		player = BLACK;
-	while (fen[strPos] != '\0')//在棋盘中填入fen串中的内容
+	for (int i = 0; i < posLen;i++)//在棋盘中填入fen串中的内容
 	{
 		char c = fen[strPos];
 		int_8 curPiece = 0;
@@ -364,7 +364,7 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//生成走法，返回走法数
 			for (int i = 0; i < 4; i++)
 			{
 				int_8 src = curPos, dst = curPos + BISHOP_DELTA[i];
-				if (!crossRiver(player, dst) && !checkSide(chessBoard[dst], player) && chessBoard[(src + dst) >> 1] == 0)
+				if (inBoard(dst)&&!crossRiver(player, dst) && !checkSide(chessBoard[dst], player) && chessBoard[(src + dst) >> 1] == 0)
 				{
 					if (!captureOnly || checkSide(chessBoard[dst], rival(player)))
 					{
