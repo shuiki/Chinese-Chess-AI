@@ -152,6 +152,7 @@ struct MoveStruct {
 	int_8 captured;
 	bool checked;
 	ZobristNode zobr;
+	char show[4];
 	void Set(int mv, int pcCaptured, bool bCheck, uint32_t dwKey_) {
 		move = mv;
 		captured = pcCaptured;
@@ -187,7 +188,7 @@ public:
 	void refreshBoard(const char* fen, int posLen,const char* moves, int movNum, char side);//根据ucci串更新棋盘
 	bool isLegalMove(int_16 mv);//判断一步棋是否合法
 	bool isChecked(Player player);//判断某玩家是否被将军
-	int_8 makeMove(int_16 mv);//走一步棋，返回被吃掉的子
+	bool makeMove(int_16 mv);//走一步棋，返回被吃掉的子
 	void undoMakeMove();//撤销上一步棋
 	void nullMove(void) {                       // 走一步空步
 		uint32_t dwKey;
@@ -207,6 +208,10 @@ public:
 	void clearMoves();
 	//void drawBoard();
 	int RepStatus(int limit)const;
+	bool lastCheck()
+	{
+		return pastMoves[pastMoveNum - 1].checked;
+	}
 	/*判断重复情况：　
 		A. 返回0，表示没有重复局面；
 		B.返回1，表示存在重复局面，但双方都无长将(判和)；

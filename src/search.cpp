@@ -52,7 +52,7 @@ bool Compare_MVV(const int lpmv1, const int lpmv2)
 	if (val > Alpha) 
 		Alpha = val;
 	// 被将军局面:
-	if (pos.isChecked(pos.player)) {
+	if (pos.lastCheck()) {
 		Move_num = pos.genMoves(mvs);
 		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
@@ -71,22 +71,25 @@ bool Compare_MVV(const int lpmv1, const int lpmv2)
 	}
 	// 对生成着法进行A-B搜索
 	for (int i = 0; i < Move_num; i++) {
-		pos.makeMove(mvs[i]);
-		//被将军局面则不进行搜索：
-		if (pos.isChecked(pos.player)){
+		if (pos.makeMove(mvs[i]))
+		{	/*
+			//被将军局面则不进行搜索：
+			if (pos.isChecked(pos.player)){
+				pos.undoMakeMove();
+				continue;
+			}
+			//未被将军局面：
+			*/
+			val = -Quies(pos, -Beta, -Alpha);
+			if (val > val_best) {
+				if (val >= Beta)
+					return val;
+				val_best = val;
+				if (val > Alpha)
+					Alpha = val;
+			}
 			pos.undoMakeMove();
-			continue;
 		}
-		//未被将军局面：
-		val = -Quies(pos, -Beta, -Alpha);
-		if (val > val_best) {
-			if (val >= Beta) 
-				return val;			
-			val_best = val;
-			if (val > Alpha) 
-				Alpha = val;		
-		}
-		pos.undoMakeMove();
 	}
 
 	return (val_best == -MATE_VALUE) ? pos.distance - MATE_VALUE : val_best;
@@ -128,7 +131,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		return searchInfo.board.Evaluate();
 	}
 	// 5. 尝试空着裁剪；
-	if (bNoNull){ //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
+	if (bNoNull&& !searchInfo.board.lastCheck()){ //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
 		searchInfo.board.nullMove();
 		vl = -SearchPV(depth - NULL_DEPTH - 1 ,-beta, 1 - beta,NO_NULL);
 		searchInfo.board.undoNullMove();
@@ -143,31 +146,47 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
 	while ((mv = MoveSort.Next()) != 0) {
-		searchInfo.board.makeMove(mv);
-		//若被将军则不尝试
-		if (searchInfo.board.isChecked(searchInfo.board.player))
+		if (searchInfo.board.makeMove(mv))
 		{
+			/*
+			//若被将军则不尝试
+			if (searchInfo.board.isChecked(searchInfo.board.player))
+			{
+				searchInfo.board.undoMakeMove();
+				continue;
+			}
+			*/
+			//int value = -SearchPV(depth - 1, -beta, -alpha);
+			nNewDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
+			if (vlBest == -MATE_VALUE) {
+				vl = -SearchPV(-beta, -alpha, nNewDepth);
+			}
+			else {
+				vl = -SearchPV(-alpha - 1, -alpha, nNewDepth);
+				if (vl > alpha && vl < beta) {
+					vl = -SearchPV(-beta, -alpha, nNewDepth);
+				}
+			}
 			searchInfo.board.undoMakeMove();
-			continue;
-		}
-		int value = -SearchPV(depth - 1, -beta, -alpha);
-		searchInfo.board.undoMakeMove();
-		if (value > beta) {
-			mvBest = mv;
-			nHashFlag = HASH_BETA;
-			break;
-		}
-				
-		if (value > alpha)
-		{
-			mvBest = mv;
-			nHashFlag = HASH_PV;
-			alpha = vl;
+			if (searchInfo.bStop)
+				return mvBest;
+			if (vl > beta) {
+				mvBest = mv;
+				nHashFlag = HASH_BETA;
+				break;
+			}
+
+			if (vl > alpha)
+			{
+				mvBest = mv;
+				nHashFlag = HASH_PV;
+				alpha = vl;
+			}
 		}
 		
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
-			searchInfo.bStop = true;
+			//searchInfo.bStop = true;
 		}
 	}
 	//searchInfo.alpha = alpha;
@@ -193,41 +212,45 @@ int SearchRoot(int depth) {
 	mvs.Init(searchInfo.mvResult);
 	// 2. 逐一搜索每个着法
 	while ((mv = mvs.Next()) != 0) {
-		searchInfo.board.makeMove(mv);
-		//若被将军则不尝试
-		if (searchInfo.board.isChecked(searchInfo.board.player))
+		if (searchInfo.board.makeMove(mv))
 		{
-			searchInfo.board.undoMakeMove();
-			continue;
-		}
-		// 3. 尝试选择性延伸(只考虑将军延伸)
-		nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
-		// 4. 主要变例搜索
-		if (vlBest == -MATE_VALUE) {
-			vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE,NO_NULL);
-		}
-		else {
-			vl = -SearchPV(nNewDepth ,-vlBest - 1, -vlBest);
-			if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
-				vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest,  NO_NULL);
+			/*
+			//若被将军则不尝试
+			if (searchInfo.board.isChecked(searchInfo.board.player))
+			{
+				searchInfo.board.undoMakeMove();
+				continue;
 			}
-		}
-		searchInfo.board.undoMakeMove();
-		if (searchInfo.bStop) {
-			return vlBest;
-		}
-		// 5. Alpha-Beta边界判定("vlBest"代替了"SearchPV()"中的"vlAlpha")
-		if (vl > vlBest) {
-			// 6. 如果搜索到第一着法，那么"未改变最佳着法"的计数器加1，否则清零
-			searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
-			vlBest = vl;
-			// 7. 搜索到最佳着法时记录主要变例
-			searchInfo.mvResult = mv;
-		}
+			*/
+			// 3. 尝试选择性延伸(只考虑将军延伸)
+			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
+			// 4. 主要变例搜索
+			if (vlBest == -MATE_VALUE) {
+				vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
+			}
+			else {
+				vl = -SearchPV(nNewDepth, -vlBest - 1, -vlBest);
+				if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
+					vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest, NO_NULL);
+				}
+			}
+			searchInfo.board.undoMakeMove();
+			if (searchInfo.bStop) {
+				return vlBest;
+			}
+			// 5. Alpha-Beta边界判定("vlBest"代替了"SearchPV()"中的"vlAlpha")
+			if (vl > vlBest) {
+				// 6. 如果搜索到第一着法，那么"未改变最佳着法"的计数器加1，否则清零
+				searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
+				vlBest = vl;
+				// 7. 搜索到最佳着法时记录主要变例
+				searchInfo.mvResult = mv;
+			}
 
-		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-		if (nCurrTimer > searchInfo.nMaxTimer) {
-			searchInfo.bStop = true;
+			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+			if (nCurrTimer > searchInfo.nMaxTimer) {
+				//searchInfo.bStop = true;
+			}
 		}
 	}
 	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
@@ -359,13 +382,58 @@ void SearchMain(int depth)
 	char result[4];
 	MOVE_COORD(searchInfo.mvResult,result);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
+	printf("%d\n",searchInfo.mvResult);
 	fflush(stdout);
-	if (searchInfo.bDebug)
+	//if (searchInfo.bDebug)
 		searchInfo.board.drawBoard();
 }
+
+/*
+position fen 3akabnr/9/P1c1b4/4p1p1p/9/2p1P4/6PcP/N3K2CR/9/R1Br5 r - - 2 14 moves a7a8 d0e0
+go time 60000
+bestmove a7a8
+17235
+*/
+
+
+/*
+ucci
+ucciok
+isready
+readyok
+position startpos r - - 0 1 moves
+go time 60000
+bestmove a3a4
+position fen rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r - - 2 2 moves a3a4 c9e7
+go time 60000
+bestmove a4a5
+position fen rn1akabnr/9/1c2b2c1/2p1p1p1p/p8/9/2P1P1P1P/1C5C1/9/RNBAKABNR r - - 0 3 moves
+go time 60000
+bestmove c3c4
+position fen rn1akabnr/9/1c2b2c1/2p1p1p1p/p8/9/2P1P1P1P/1C5C1/9/RNBAKABNR r - - 0 4 moves c3c4 a5a4
+go time 60000
+bestmove c4c5
+*/
+
 /*
 ucci
 isready
-position fen rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r - - 0 1 moves h2e2 h9g7
+position fen rnbakabnr/9/1c7/p1p1p1p1p/9/9/P1P1P1P1P/1C5CR/9/RNBAKABc1 r - - 0 2 moves
+go time 60000
+bestmove h0k0
+bestmove g0e2
+42953
+*/
+
+/*
+ucci
+isready
+position startpos r - - 0 1 moves
+go time 60000
+position fen rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r - - 2 2 moves a3a4 c9e7
+go time 60000
+position fen rn1akabnr/9/1c2b2c1/2p1p1p1p/p8/9/2P1P1P1P/1C5C1/9/RNBAKABNR r - - 0 3 moves
+go time 60000
+position fen rn1akabnr/9/1c2b2c1/2p1p1p1p/p8/9/2P1P1P1P/1C5C1/9/RNBAKABNR r - - 0 4 moves c3c4 a5a4
 go time 60000
 */
