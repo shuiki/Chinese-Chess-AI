@@ -28,9 +28,9 @@ int main() {
 			fflush(stdout);
 			break;
 		case Comm_position:
-
 			searchInfo.board.refreshBoard(UcciComm.position.pos, UcciComm.position.posLen, UcciComm.position.CoordList, UcciComm.position.Move_Num, UcciComm.position.player);
 			searchInfo.board.distance = 0;
+			searchInfo.board.drawBoard();
 			break;
 		case Comm_go:
 			searchInfo.nMaxTimer = (int)(0.95 * UcciComm.search.TIME);

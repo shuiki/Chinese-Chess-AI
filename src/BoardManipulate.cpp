@@ -24,6 +24,10 @@ Board::Board()
 
 void Board::addPiece(int_8 pos, int_8 piece)
 {
+	if (piece >=48)
+	{
+		return;
+	}
 	chessBoard[pos] = piece;
 	chessView[piece] = pos;
 	dwBitPiece ^= BIT_PIECE(piece);
@@ -68,7 +72,7 @@ void Board::changeSide()
 	zobr.XOR(Zobrist.PlayerZobr);
 }
 
-int_8 Board::makeMove(int_16 mv)//走一步棋，返回被吃掉的子
+bool Board::makeMove(int_16 mv)//走一步棋，返回被吃掉的子
 {
 	int_8 src = getSRC(mv);
 	int_8 dst = getDST(mv);
@@ -78,12 +82,20 @@ int_8 Board::makeMove(int_16 mv)//走一步棋，返回被吃掉的子
 		delPiece(dst);
 	delPiece(src);
 	addPiece(dst, sp);
+	if (isChecked(player)) {
+		delPiece(dst);
+		addPiece(src, sp);
+		if (dp)
+			addPiece(dst,dp);
+		return false;
+	}
 	changeSide();
 	checked = isChecked(player);
 	pastMoves[pastMoveNum] = { mv,dp,checked,zobr };
+	MOVE_COORD(mv,pastMoves[pastMoveNum].show); 
 	pastMoveNum++;
 	distance++;
-	return dp;
+	return true;
 }
 
 void Board::undoMakeMove()//撤销一步棋，参数是被吃掉的棋子
