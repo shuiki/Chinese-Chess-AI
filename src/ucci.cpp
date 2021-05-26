@@ -114,7 +114,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 		}
 		// 然后寻找是否指定了后续着法，即是否有"moves"关键字
 		if (strncmp(lp, "moves ", 6) == 0) {
-			//略过" moves "
+			//略过"moves "
 			lp += 6;
 			UcciComm.position.Move_Num = min((int)(strlen(lp) + 1) / 5, MAX_MOVE_NUM); 	// "moves"后面的每个着法都是1个空格和4个字符
 			UcciComm.position.CoordList = lp;
