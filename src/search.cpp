@@ -1,96 +1,96 @@
-
 #include"search.h"
 
 MoveSortStruct mvs;
 SearchInfo searchInfo;
 HashStruct HashTable[HASH_SIZE];
 const bool NO_NULL = false; // "SearchPV()"的参数，是否禁止空着裁剪
+
 // 重复裁剪
-static int RepPruning(const Board& pos, int vlBeta) {
+int RepPruning(const Board& pos, int vlBeta) {
 	int vlRep = pos.RepStatus(1);
 	if (vlRep > 0) {
 		return pos.RepValue(vlRep);
 	}
 	return -MATE_VALUE;
 }
-// MVV/LVA每种子力的价值
 
-static int cucMvvLva[24] = {
+// MVV/LVA每种子力的价值
+static int value_MVV[24] = {
   0, 0, 0, 0, 0, 0, 0, 0,
   5, 1, 1, 3, 4, 3, 2, 0,
   5, 1, 1, 3, 4, 3, 2, 0
 };
-inline int MvvLva(int mv)
+ int get_value(int mv)
 {
-	return (cucMvvLva[searchInfo.board.chessBoard[getDST(mv)]] << 3) - cucMvvLva[searchInfo.board.chessBoard[getSRC(mv)]];
+	return (value_MVV[searchInfo.board.chessBoard[getDST(mv)]] << 3) - value_MVV[searchInfo.board.chessBoard[getSRC(mv)]];
 }
 
-bool CompareMvvLva(const int lpmv1, const int lpmv2) {
-	return MvvLva(lpmv1) > MvvLva(lpmv2);
+bool Compare_MVV(const int lpmv1, const int lpmv2) 
+{
+	if (get_value(lpmv1) > get_value(lpmv2))
+		return true;
+	else 
+		return false;
 }
 
-/*******
-***********
-***********************/
-// 静态搜索过程
-static int static_Search(Board& pos, int Alpha, int Beta) {
-	int vlBest, vl, nGenMoves;
+// 静态搜索
+ int Quies(Board& pos, int Alpha, int Beta) {
+
+	 // 达到极限深度，直接返回局面评价值；
+	 if (pos.distance == LIMIT_DEPTH) {
+		 return  pos.Evaluate();
+	 }
+
+	int val, Move_num=0,val_best= -MATE_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
-	// 1. 重复裁剪；
-	vl = RepPruning(pos, Beta);
-	if (vl > -MATE_VALUE) {
-		return vl;
+
+	// 重复裁剪；
+	val = RepPruning(pos, Beta);
+	if (val > -MATE_VALUE) {
+		return val;
 	}
-	// 2. 达到极限深度，直接返回评价值；
-	if (pos.distance == LIMIT_DEPTH) {
-		return  pos.Evaluate();
-	}
-	// 3. 初始化；
-	vlBest = -MATE_VALUE;
-	// 4. 对于被将军的局面，生成全部着法；
+	if (val > Alpha) 
+		Alpha = val;
+	// 被将军局面:
 	if (pos.isChecked(pos.player)) {
-		nGenMoves = pos.genMoves(mvs);
-		std::sort(mvs, mvs + nGenMoves, CompareHistory);
+		Move_num = pos.genMoves(mvs);
+		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
-	else {
-		// 5. 对于未被将军的局面，在生成着法前首先尝试空着(空着启发)，即对局面作评价；
-		vl = pos.Evaluate();
-		if (vl >= Beta) {
-			return vl;
+	// 未被将军局面:
+	else {		
+		val = pos.Evaluate();
+		if (val >= Beta) {
+			return val;
 		}
-		vlBest = vl;
-		Alpha = max(vl, Alpha);
-		// 6. 对于未被将军的局面，生成并排序所有吃子着法(MVV(LVA)启发)；
-		nGenMoves = pos.genMoves(mvs, true);
-		std::sort(mvs, mvs + nGenMoves, CompareMvvLva);
+		val_best = val;
+		if (val > Alpha) {
+			Alpha = val;
+		}
+		Move_num = pos.genMoves(mvs, true);
+		std::sort(mvs, mvs + Move_num, Compare_MVV);
 	}
-	// 7. 用Alpha-Beta算法搜索这些着法；
-	for (int i = 0; i < nGenMoves; i++) {
+	// 对生成着法进行A-B搜索
+	for (int i = 0; i < Move_num; i++) {
 		pos.makeMove(mvs[i]);
-		//若被将军则不尝试
-		if (pos.isChecked(pos.player))
-		{
+		//被将军局面则不进行搜索：
+		if (pos.isChecked(pos.player)){
 			pos.undoMakeMove();
 			continue;
 		}
-		vl = -static_Search(pos, -Beta, -Alpha);
-		pos.undoMakeMove();
-		if (vl > vlBest) {
-			if (vl >= Beta) {
-				return vl;
-			}
-			vlBest = vl;
-			Alpha = max(vl, Alpha);
+		//未被将军局面：
+		val = -Quies(pos, -Beta, -Alpha);
+		if (val > val_best) {
+			if (val >= Beta) 
+				return val;			
+			val_best = val;
+			if (val > Alpha) 
+				Alpha = val;		
 		}
-		
+		pos.undoMakeMove();
 	}
-	// 8. 返回分值。
-	if (vlBest == -MATE_VALUE) {
-		return pos.distance - MATE_VALUE;
-	}
-	else {
-		return vlBest;
-	}
+
+	return (val_best == -MATE_VALUE) ? pos.distance - MATE_VALUE : val_best;
+	
 }
 
 /*******************
@@ -109,7 +109,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	// 1. 在叶子结点处调用静态搜索；
 	if (depth <= 0)
 		//return searchInfo.board.valueRed - searchInfo.board.valueBlack;
-		return static_Search(searchInfo.board, alpha, beta);
+		return Quies(searchInfo.board, alpha, beta);
 		//return Evaluate(searchInfo.board);
 	
 	// 2. 重复裁剪；
@@ -295,7 +295,7 @@ void SearchMain(int depth)
 
 	// 3. 如果深度为零则返回静态搜索值
 	if (depth == 0) {
-		vl = static_Search(searchInfo.board, -MATE_VALUE, MATE_VALUE);
+		vl = Quies(searchInfo.board, -MATE_VALUE, MATE_VALUE);
 		//		vl = Evaluate(searchInfo.board);
 		if (searchInfo.bDebug) {
 			printf("info depth 0 score %d\n", vl);
