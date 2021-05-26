@@ -167,7 +167,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
-			//searchInfo.bStop = true;
+			searchInfo.bStop = true;
 		}
 	}
 	//searchInfo.alpha = alpha;
@@ -227,7 +227,7 @@ int SearchRoot(int depth) {
 
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
-			//searchInfo.bStop = true;
+			searchInfo.bStop = true;
 		}
 	}
 	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
