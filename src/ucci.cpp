@@ -90,7 +90,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			lp += 4;
 			UcciComm.position.Fen = lp;
 			int l; int space_num = 0;
-			for (l = 0; space_num < 2; lp++) {
+			for (l = 0; space_num < 6; lp++) {
 				if (*lp != ' '|| *lp == '\n') {
 					if (space_num == 0) {
 						UcciComm.position.pos [l] = *lp;
@@ -107,16 +107,15 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			system("pause");*/
 			UcciComm.position.pos [l] = '\0';
 			UcciComm.position.posLen = l;
-			lp += 7;
 		}
 		// 如果两者都不是，就立即返回
 		else {
 			return Comm_none;
 		}
 		// 然后寻找是否指定了后续着法，即是否有"moves"关键字
-		if (strncmp(lp, " moves ", 7) == 0) {
+		if (strncmp(lp, "moves ", 6) == 0) {
 			//略过" moves "
-			lp += 7;
+			lp += 6;
 			UcciComm.position.Move_Num = min((int)(strlen(lp) + 1) / 5, MAX_MOVE_NUM); 	// "moves"后面的每个着法都是1个空格和4个字符
 			UcciComm.position.CoordList = lp;
 			return Comm_position;
