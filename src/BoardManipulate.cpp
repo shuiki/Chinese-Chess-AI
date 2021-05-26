@@ -158,6 +158,8 @@ void Board::refreshBoard(const char* fen, int posLen,const char* moves, int movN
 		makeMove(mv);
 		strPos += 5;
 	}
+	clearMoves();
+	PreEvaluate();
 	//drawBoard();
 }
 

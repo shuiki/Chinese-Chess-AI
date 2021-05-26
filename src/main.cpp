@@ -60,6 +60,8 @@ int main() {
 	printf("%s\n", "ucciok");
 	fflush(stdout);
 	//extern SearchInfo searchInfo;
+	searchInfo.board.clearBoard();
+	searchInfo.board.clearMoves();
 	searchInfo.board.distance = 0;
 	searchInfo.bQuit = false;
 	searchInfo.bDebug = !true;
