@@ -90,10 +90,11 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 			lp += 4;
 			UcciComm.position.Fen = lp;
 			int l; int space_num = 0;
-			for (l = 0; space_num < 2; lp++, l++) {
+			for (l = 0; space_num < 2; lp++) {
 				if (*lp != ' '|| *lp == '\n') {
 					if (space_num == 0) {
 						UcciComm.position.pos [l] = *lp;
+						l++;
 					}
 					else if (space_num == 1)
 						UcciComm.position.player = *lp;
