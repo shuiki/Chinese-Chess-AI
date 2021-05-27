@@ -77,7 +77,7 @@ inline int FILE_X(int sq) {
 }
 
 inline int SIDE_VALUE(int turn, int value){
-    return (turn==0)?value:-value;
+    return (turn==1)?value:-value;
 }
 
 inline bool HOME_HALF(int sq, int sd) {
