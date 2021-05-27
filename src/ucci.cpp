@@ -71,9 +71,9 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 	//如果读到position指令，着法列表保存在UcciComm里
 	else if (strncmp(lp, "position ", 9) == 0) {
 		lp += 9;
-		if (strncmp(lp, "startpos", 8) == 0) {
-			lp += 8;
-			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
+		if (strncmp(lp, "startpos ", 9) == 0) {
+			lp += 9;
+			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r";
 			UcciComm.position.player = 'r';
 			int i;
 			for (i = 0; *(UcciComm.position.Fen + i) != ' '; i++) {
@@ -81,6 +81,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 					UcciComm.position.pos [i] = *(UcciComm.position.Fen + i);
 				}
 			}
+			UcciComm.position.pos[i]='\0';
 			UcciComm.position.posLen = i;
 			//UcciComm.position.pos[i] = '\0';
 
@@ -114,7 +115,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 		}
 		// 然后寻找是否指定了后续着法，即是否有"moves"关键字
 		if (strncmp(lp, "moves ", 6) == 0) {
-			//略过"moves "
+			//略过" moves "
 			lp += 6;
 			UcciComm.position.Move_Num = min((int)(strlen(lp) + 1) / 5, MAX_MOVE_NUM); 	// "moves"后面的每个着法都是1个空格和4个字符
 			UcciComm.position.CoordList = lp;
