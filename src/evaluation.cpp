@@ -4,7 +4,7 @@
 #include "BoardManipulate.h"
 using namespace std;
 
-// ∏˜÷÷◊”¡¶µƒ∆¡±ŒŒª
+// ÂêÑÁßçÂ≠êÂäõÁöÑÂ±èËîΩ‰Ωç
 const int KING_BITPIECE = 1 << KING_FROM;
 const int ADVISOR_BITPIECE = (1 << ADVISOR_FROM) | (1 << ADVISOR_TO);
 const int BISHOP_BITPIECE = (1 << BISHOP_FROM) | (1 << BISHOP_TO);
@@ -24,14 +24,14 @@ const int TOTAL_ATTACK_VALUE = 8;
 const int ADVISOR_BISHOP_ATTACKLESS_VALUE = 80;
 const int TOTAL_ADVISOR_LEAKAGE = 80;
 
-// ∏˜÷÷∆Â–Œµƒ◊”¡¶∆¿π¿
-// Œª÷√∑÷÷µ
-// ¡ÈªÓ–‘∑÷÷µ
-// π•ª˜ªÚ±£ª§πÿœµ
+// ÂêÑÁßçÊ£ãÂΩ¢ÁöÑÂ≠êÂäõËØÑ‰º∞
+// ‰ΩçÁΩÆÂàÜÂÄº
+// ÁÅµÊ¥ªÊÄßÂàÜÂÄº
+// ÊîªÂáªÊàñ‰øùÊä§ÂÖ≥Á≥ª
 
-// ø™æ÷Œª÷√∑÷÷µ£¨≤–æ÷¡Ìº∆
-// “‘∫Ï∑ΩŒ™¿˝£¨∂‘”⁄∫⁄∑Ω–Ë“™ƒÊ◊™∆Â≈Ã(254-sq)
-// ≤ø∑÷≤Œ’’eleeye
+// ÂºÄÂ±Ä‰ΩçÁΩÆÂàÜÂÄºÔºåÊÆãÂ±ÄÂè¶ËÆ°
+// ‰ª•Á∫¢Êñπ‰∏∫‰æãÔºåÂØπ‰∫éÈªëÊñπÈúÄË¶ÅÈÄÜËΩ¨Ê£ãÁõò(254-sq)
+// ÈÉ®ÂàÜÂèÇÁÖßeleeye
 const int position_val[7][256] = {
     // KING
     {
@@ -344,95 +344,95 @@ const int PawnEndgameAttackless[256] = {
 
 void Board::PreEvaluate(void) {
     int i, sq, nMidgameValue, nWhiteAttacks, nBlackAttacks, nWhiteSimpleValue, nBlackSimpleValue;
-    uint8_t ucvlPawnPiecesAttacking[256], ucvlPawnPiecesAttackless[256];
-    // ø™÷–æ÷ªπ «≤–æ÷ //
-    // º∆À„∏˜÷÷∆Â◊” ˝¡ø£¨≥µ6£¨¬Ì≈⁄3£¨∆‰À˚1£¨ ±º‰“™øÏ£¨øœ∂®≤ªƒ‹”√—≠ª∑
-    nMidgameValue = PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ADVISOR_BITPIECE | BISHOP_BITPIECE | PAWN_BITPIECE)) * OTHER_MIDGAME_VALUE;
-    nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(KNIGHT_BITPIECE | CANNON_BITPIECE)) * KNIGHT_CANNON_MIDGAME_VALUE;
-    nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ROOK_BITPIECE)) * ROOK_MIDGAME_VALUE;
-    //  π”√∂˛¥Œ∫Ø ˝£¨◊”¡¶∫‹…Ÿ ±±ª»œŒ™ «≤–æ÷
-    nMidgameValue = (2 * TOTAL_MIDGAME_VALUE - nMidgameValue) * nMidgameValue / TOTAL_MIDGAME_VALUE;
-    PreEval.valueAdvanced = (TOTAL_ADVANCED_VALUE * nMidgameValue + TOTAL_ADVANCED_VALUE / 2) / TOTAL_MIDGAME_VALUE;
-    for (sq = 0; sq < 256; sq++)
-    {
-        if (inBoard(sq))
-        {
-            PreEval.ucvlWhitePieces[0][sq] = PreEval.ucvlBlackPieces[0][254 - sq] = (uint8_t)
-                ((position_val[0][sq] * nMidgameValue + EndGame_val[0][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-            PreEval.ucvlWhitePieces[3][sq] = PreEval.ucvlBlackPieces[3][254 - sq] = (uint8_t)
-                ((position_val[3][sq] * nMidgameValue + EndGame_val[3][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-            PreEval.ucvlWhitePieces[4][sq] = PreEval.ucvlBlackPieces[4][254 - sq] = (uint8_t)
-                ((position_val[4][sq] * nMidgameValue + EndGame_val[4][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-            PreEval.ucvlWhitePieces[5][sq] = PreEval.ucvlBlackPieces[5][254 - sq] = (uint8_t)
-                ((position_val[5][sq] * nMidgameValue + EndGame_val[5][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-            ucvlPawnPiecesAttacking[sq] = (uint8_t)
-                ((position_val[6][sq] * nMidgameValue + EndGame_val[6][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-            ucvlPawnPiecesAttackless[sq] = (uint8_t)
-                ((PawnMidgameAttackless[sq] * nMidgameValue + PawnEndgameAttackless[sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-        }
-    }
+//     uint8_t ucvlPawnPiecesAttacking[256], ucvlPawnPiecesAttackless[256];
+//     // ÂºÄ‰∏≠Â±ÄËøòÊòØÊÆãÂ±Ä //
+//     // ËÆ°ÁÆóÂêÑÁßçÊ£ãÂ≠êÊï∞ÈáèÔºåËΩ¶6ÔºåÈ©¨ÁÇÆ3ÔºåÂÖ∂‰ªñ1ÔºåÊó∂Èó¥Ë¶ÅÂø´ÔºåËÇØÂÆö‰∏çËÉΩÁî®Âæ™ÁéØ
+//     nMidgameValue = PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ADVISOR_BITPIECE | BISHOP_BITPIECE | PAWN_BITPIECE)) * OTHER_MIDGAME_VALUE;
+//     nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(KNIGHT_BITPIECE | CANNON_BITPIECE)) * KNIGHT_CANNON_MIDGAME_VALUE;
+//     nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ROOK_BITPIECE)) * ROOK_MIDGAME_VALUE;
+//     // ‰ΩøÁî®‰∫åÊ¨°ÂáΩÊï∞ÔºåÂ≠êÂäõÂæàÂ∞ëÊó∂Ë¢´ËÆ§‰∏∫ÊòØÊÆãÂ±Ä
+//     nMidgameValue = (2 * TOTAL_MIDGAME_VALUE - nMidgameValue) * nMidgameValue / TOTAL_MIDGAME_VALUE;
+//     PreEval.valueAdvanced = (TOTAL_ADVANCED_VALUE * nMidgameValue + TOTAL_ADVANCED_VALUE / 2) / TOTAL_MIDGAME_VALUE;
+//     for (sq = 0; sq < 256; sq++)
+//     {
+//         if (inBoard(sq))
+//         {
+//             PreEval.ucvlWhitePieces[0][sq] = PreEval.ucvlBlackPieces[0][254 - sq] = (uint8_t)
+//                 ((position_val[0][sq] * nMidgameValue + EndGame_val[0][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+//             PreEval.ucvlWhitePieces[3][sq] = PreEval.ucvlBlackPieces[3][254 - sq] = (uint8_t)
+//                 ((position_val[3][sq] * nMidgameValue + EndGame_val[3][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+//             PreEval.ucvlWhitePieces[4][sq] = PreEval.ucvlBlackPieces[4][254 - sq] = (uint8_t)
+//                 ((position_val[4][sq] * nMidgameValue + EndGame_val[4][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+//             PreEval.ucvlWhitePieces[5][sq] = PreEval.ucvlBlackPieces[5][254 - sq] = (uint8_t)
+//                 ((position_val[5][sq] * nMidgameValue + EndGame_val[5][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+//             ucvlPawnPiecesAttacking[sq] = (uint8_t)
+//                 ((position_val[6][sq] * nMidgameValue + EndGame_val[6][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+//             ucvlPawnPiecesAttackless[sq] = (uint8_t)
+//                 ((PawnMidgameAttackless[sq] * nMidgameValue + PawnEndgameAttackless[sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+//         }
+//     }
 
-    // Ω¯π•◊¥Ã¨£¨º∆À„π˝∫”∆Â◊”
-    nWhiteAttacks = nBlackAttacks = 0;
-    for (i = 16 + KNIGHT_FROM; i <= 16 + ROOK_TO; i++) {
-        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
-            nWhiteAttacks += 2;
-        }
-    }
-    for (i = 16 + CANNON_FROM; i <= 16 + PAWN_TO; i++) {
-        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
-            nWhiteAttacks++;
-        }
-    }
-    for (i = 32 + KNIGHT_FROM; i <= 32 + ROOK_TO; i++) {
-        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
-            nBlackAttacks += 2;
-        }
-    }
-    for (i = 32 + CANNON_FROM; i <= 32 + PAWN_TO; i++) {
-        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
-            nBlackAttacks++;
-        }
-    }
+//     // ËøõÊîªÁä∂ÊÄÅÔºåËÆ°ÁÆóËøáÊ≤≥Ê£ãÂ≠ê
+//     nWhiteAttacks = nBlackAttacks = 0;
+//     for (i = 16 + KNIGHT_FROM; i <= 16 + ROOK_TO; i++) {
+//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
+//             nWhiteAttacks += 2;
+//         }
+//     }
+//     for (i = 16 + CANNON_FROM; i <= 16 + PAWN_TO; i++) {
+//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
+//             nWhiteAttacks++;
+//         }
+//     }
+//     for (i = 32 + KNIGHT_FROM; i <= 32 + ROOK_TO; i++) {
+//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
+//             nBlackAttacks += 2;
+//         }
+//     }
+//     for (i = 32 + CANNON_FROM; i <= 32 + PAWN_TO; i++) {
+//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
+//             nBlackAttacks++;
+//         }
+//     }
 
-    // »Áπ˚±æ∑Ω«·◊” ˝±»∂‘∑Ω∂‡£¨ƒ«√¥√ø∂‡“ª∏ˆ«·◊”(≥µÀ„2∏ˆ«·◊”)Õ˛–≤÷µº”2°£Õ˛–≤÷µ◊Ó∂‡≤ª≥¨π˝8°£
-    nWhiteSimpleValue = PopCnt16(this->wBitPiece[0] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[0] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
-    nBlackSimpleValue = PopCnt16(this->wBitPiece[1] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[1] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
-    if (nWhiteSimpleValue > nBlackSimpleValue) {
-        nWhiteAttacks += (nWhiteSimpleValue - nBlackSimpleValue) * 2;
-    }
-    else {
-        nBlackAttacks += (nBlackSimpleValue - nWhiteSimpleValue) * 2;
-    }
-    nWhiteAttacks = min(nWhiteAttacks, TOTAL_ATTACK_VALUE);
-    nBlackAttacks = min(nBlackAttacks, TOTAL_ATTACK_VALUE);
-    // PreEvalEx.vlBlackAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nWhiteAttacks / TOTAL_ATTACK_VALUE;
-    // PreEvalEx.vlWhiteAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nBlackAttacks / TOTAL_ATTACK_VALUE;
+//     // Â¶ÇÊûúÊú¨ÊñπËΩªÂ≠êÊï∞ÊØîÂØπÊñπÂ§öÔºåÈÇ£‰πàÊØèÂ§ö‰∏Ä‰∏™ËΩªÂ≠ê(ËΩ¶ÁÆó2‰∏™ËΩªÂ≠ê)Â®ÅËÉÅÂÄºÂä†2„ÄÇÂ®ÅËÉÅÂÄºÊúÄÂ§ö‰∏çË∂ÖËøá8„ÄÇ
+//     nWhiteSimpleValue = PopCnt16(this->wBitPiece[0] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[0] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
+//     nBlackSimpleValue = PopCnt16(this->wBitPiece[1] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[1] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
+//     if (nWhiteSimpleValue > nBlackSimpleValue) {
+//         nWhiteAttacks += (nWhiteSimpleValue - nBlackSimpleValue) * 2;
+//     }
+//     else {
+//         nBlackAttacks += (nBlackSimpleValue - nWhiteSimpleValue) * 2;
+//     }
+//     nWhiteAttacks = min(nWhiteAttacks, TOTAL_ATTACK_VALUE);
+//     nBlackAttacks = min(nBlackAttacks, TOTAL_ATTACK_VALUE);
+//     // PreEvalEx.vlBlackAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nWhiteAttacks / TOTAL_ATTACK_VALUE;
+//     // PreEvalEx.vlWhiteAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nBlackAttacks / TOTAL_ATTACK_VALUE;
 
-    for (sq = 0; sq < 256; sq++) {
-        if (inBoard(sq)) {
-            PreEval.ucvlWhitePieces[1][sq] = (uint8_t)((EndGame_val[1][sq] * nBlackAttacks + position_val[1][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-            PreEval.ucvlWhitePieces[2][sq] = (uint8_t)((EndGame_val[2][sq] * nBlackAttacks + position_val[2][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-            PreEval.ucvlBlackPieces[1][sq] = (uint8_t)((EndGame_val[1][254 - sq] * nWhiteAttacks + position_val[1][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-            PreEval.ucvlBlackPieces[2][sq] = (uint8_t)((EndGame_val[2][254 - sq] * nWhiteAttacks + position_val[2][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-            PreEval.ucvlWhitePieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[sq] * nWhiteAttacks + ucvlPawnPiecesAttackless[sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-            PreEval.ucvlBlackPieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[254 - sq] * nBlackAttacks + ucvlPawnPiecesAttackless[254 - sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-        }
-    }
-    // ∂‘≥∆œ»≤ª–¥
-    // µ˜’˚≤ª ‹Õ˛–≤∑Ω…ŸµÙµƒ À( ø)œ‡(œÛ)∑÷÷µ
-    // ≤ªøº¬«…˝±‰
-    this->valueRed = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nBlackAttacks) / TOTAL_ATTACK_VALUE;
-    this->valueBlack = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nWhiteAttacks) / TOTAL_ATTACK_VALUE;
-
-    // ◊”¡¶Œª÷√∑÷
+//     for (sq = 0; sq < 256; sq++) {
+//         if (inBoard(sq)) {
+//             PreEval.ucvlWhitePieces[1][sq] = (uint8_t)((EndGame_val[1][sq] * nBlackAttacks + position_val[1][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+//             PreEval.ucvlWhitePieces[2][sq] = (uint8_t)((EndGame_val[2][sq] * nBlackAttacks + position_val[2][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+//             PreEval.ucvlBlackPieces[1][sq] = (uint8_t)((EndGame_val[1][254 - sq] * nWhiteAttacks + position_val[1][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+//             PreEval.ucvlBlackPieces[2][sq] = (uint8_t)((EndGame_val[2][254 - sq] * nWhiteAttacks + position_val[2][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+//             PreEval.ucvlWhitePieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[sq] * nWhiteAttacks + ucvlPawnPiecesAttackless[sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+//             PreEval.ucvlBlackPieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[254 - sq] * nBlackAttacks + ucvlPawnPiecesAttackless[254 - sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+//         }
+//     }
+//     // ÂØπÁß∞ÂÖà‰∏çÂÜô
+//     // Ë∞ÉÊï¥‰∏çÂèóÂ®ÅËÉÅÊñπÂ∞ëÊéâÁöÑ‰ªï(Â£´)Áõ∏(Ë±°)ÂàÜÂÄº
+//     // ‰∏çËÄÉËôëÂçáÂèò
+//     this->valueRed = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nBlackAttacks) / TOTAL_ATTACK_VALUE;
+//     this->valueBlack = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nWhiteAttacks) / TOTAL_ATTACK_VALUE;
+    
+    PreEval.valueAdvanced = 3;
+    // Â≠êÂäõ‰ΩçÁΩÆÂàÜ
     for (int i = 16; i < 32; i++)
     {
         sq = this->chessView[i];
         if (sq != 0)
         {
-            // __ASSERT_SQUARE(sq);
-            // assert(inBoard[sq]);
+            PreEval.ucvlWhitePieces[PieceType[i]][sq] = position_val[PieceType[i]][sq];
             this->valueRed += PreEval.ucvlWhitePieces[PieceType[i]][sq];
         }
     }
@@ -441,8 +441,7 @@ void Board::PreEvaluate(void) {
         sq = this->chessView[i];
         if (sq != 0)
         {
-            // __ASSERT_SQUARE(sq);
-            // assert(inBoard[sq]);
+            PreEval.ucvlBlackPieces[PieceType[i]][sq] = position_val[PieceType[i]][254-sq];
             this->valueBlack += PreEval.ucvlBlackPieces[PieceType[i]][sq];
         }
     }
