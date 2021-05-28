@@ -377,7 +377,7 @@ void SearchMain(int depth)
 
 	}
 	//完成迭代加深搜索，获得结果
-	searchInfo.board.drawBoard();
+	//searchInfo.board.drawBoard();
 	/*printf("SSSSSSSSSSSSSSSSSSS:after\n");
 	fflush(stdout);
 	searchInfo.board.drawBoard();*/
@@ -385,10 +385,10 @@ void SearchMain(int depth)
 	char result[4];
 	MOVE_COORD(searchInfo.mvResult,result);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
-	printf("%d\n",searchInfo.mvResult);
+	//printf("%d\n",searchInfo.mvResult);
 	fflush(stdout);
 	//if (searchInfo.bDebug)
-		searchInfo.board.drawBoard();
+		//searchInfo.board.drawBoard();
 }
 
 /*
