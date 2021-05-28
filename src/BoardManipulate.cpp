@@ -456,13 +456,13 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//生成走法，返回走法�
 					mvNum++;
 				}
 			}
-			if (crossRiver(player, dst))
+			if (crossRiver(player, src))
 			{
 				if (inBoard(src + 1) && !checkSide(chessBoard[src + 1], player))
 				{
 					if (!captureOnly || checkSide(chessBoard[dst], rival(player)))
 					{
-						mvs[mvNum] = getMV(src + 1, dst);
+						mvs[mvNum] = getMV(src, src+1);
 						mvNum++;
 					}
 				}
@@ -470,7 +470,7 @@ int Board::genMoves(int_16* mvs, bool captureOnly)//生成走法，返回走法�
 				{
 					if (!captureOnly || checkSide(chessBoard[dst], rival(player)))
 					{
-						mvs[mvNum] = getMV(src - 1, dst);
+						mvs[mvNum] = getMV(src, src-1);
 						mvNum++;
 					}
 				}
@@ -528,8 +528,6 @@ int_32 RC4::NextLong(void) {
 	return Ret.dw;
 }
 
-const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
-const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
 
 
 inline const char* PIECE_BYTE_IN_CHINESE(int pt, bool type) {

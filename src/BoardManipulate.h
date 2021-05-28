@@ -12,6 +12,9 @@ typedef unsigned char int_8;//用来表示棋子、位置
 typedef unsigned int int_32;//用来表示校验码等
 typedef unsigned short int_16;//用来表示move（起点+终点）
 
+const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
+const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
+
 enum Player { BLACK, RED, NUL };
 
 const int MAX_MOV_NUM = 128;
