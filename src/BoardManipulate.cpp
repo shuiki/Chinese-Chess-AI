@@ -39,7 +39,7 @@ void Board::addPiece(int_8 pos, int_8 piece)
 	}
 	else
 	{
-		valueBlack += PreEval.ucvlBlackPieces[PieceType[piece]][254 - pos];
+		valueBlack += PreEval.ucvlBlackPieces[PieceType[piece]][pos];
 		zobr.XOR(Zobrist.Table[PieceType[piece] + 7][pos]);
 		wBitPiece[1] ^= BIT_PIECE(piece - 16);
 	}
@@ -60,7 +60,7 @@ void Board::delPiece(int_8 pos)
 	}
 	else
 	{
-		valueBlack -= PreEval.ucvlBlackPieces[PieceType[pc]][254 - pos];
+		valueBlack -= PreEval.ucvlBlackPieces[PieceType[pc]][pos];
 		zobr.XOR(Zobrist.Table[PieceType[pc] + 7][pos]);
 		wBitPiece[1] ^= BIT_PIECE(pc - 16);
 	}
