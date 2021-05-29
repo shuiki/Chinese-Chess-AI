@@ -397,7 +397,7 @@ bool Board::isChecked(Player player)//判断某玩家是否被将军
 		int_8 src = kingPos, dst = kingPos + delta;
 		if (inBoard(dst) && PieceType[chessBoard[dst]] == KNIGHT_TYPE &&
 			checkSide(chessBoard[dst], rival(player)) &&
-			chessBoard[src + LegalSpan[delta + 64]] == 0)
+			chessBoard[src + KNIGHT_CHECK[i]] == 0)
 			return true;
 	}
 	//判断是否被车或炮将军或将帅对脸

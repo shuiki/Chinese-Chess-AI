@@ -117,6 +117,7 @@ const int KING_DELTA[4] = { -16,16,-1,1 };
 const int ADVISOR_DELTA[4] = { -17,17,-15,15 };
 const int BISHOP_DELTA[4] = { -34,34,-30,30 };
 const int KNIGHT_DELTA[8] = { -33, -31, -18, 14, -14, 18, 31, 33 };
+const int KNIGHT_CHECK[8] = { -17,-15,-17,15,-15,17,15,17 };
 
 class RC4 {//生成用于zobrist校验的随机码
 public:
