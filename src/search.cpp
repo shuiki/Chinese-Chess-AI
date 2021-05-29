@@ -25,12 +25,12 @@ int prune(const Board& pos) {
 // MVV每种子力价值：
 static int MVV_value[24] = { 0, 0, 0, 0, 0, 0, 0, 0,5, 1, 1, 3, 4, 3, 2, 0,5, 1, 1, 3, 4, 3, 2, 0 };
 
-inline int value(int mv){
-	return (8 * MVV_value[searchInfo.board.chessBoard[getDST(mv)]]) - MVV_value[searchInfo.board.chessBoard[getSRC(mv)]];
+inline int value(int value){
+	return (8 * MVV_value[searchInfo.board.chessBoard[getDST(value)]]) - MVV_value[searchInfo.board.chessBoard[getSRC(value)]];
 }
 
-inline bool Compare_MVV(const int lpmv1, const int lpmv2){
-	if (value(lpmv1) > value(lpmv2))
+inline bool Compare_MVV(int value_1, int value_2){
+	if (value(value_1) > value(value_2))
 		return true;
 	else
 		return false;
@@ -40,9 +40,8 @@ inline bool Compare_MVV(const int lpmv1, const int lpmv2){
 int Quies(Board& pos, int Alpha, int Beta) {
 
 	// 达到极限深度，直接返回；
-	if (pos.distance == LIMIT_DEPTH) {
+	if (pos.distance == LIMIT_DEPTH) 
 		return  pos.Evaluate();
-	}
 
 	int val, Move_num = 0, val_best = -MATE_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
