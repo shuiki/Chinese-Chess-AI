@@ -344,86 +344,86 @@ const int PawnEndgameAttackless[256] = {
 
 void Board::PreEvaluate(void) {
     int i, sq, nMidgameValue, nWhiteAttacks, nBlackAttacks, nWhiteSimpleValue, nBlackSimpleValue;
-//     uint8_t ucvlPawnPiecesAttacking[256], ucvlPawnPiecesAttackless[256];
-//     // 开中局还是残局 //
-//     // 计算各种棋子数量，车6，马炮3，其他1，时间要快，肯定不能用循环
-//     nMidgameValue = PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ADVISOR_BITPIECE | BISHOP_BITPIECE | PAWN_BITPIECE)) * OTHER_MIDGAME_VALUE;
-//     nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(KNIGHT_BITPIECE | CANNON_BITPIECE)) * KNIGHT_CANNON_MIDGAME_VALUE;
-//     nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ROOK_BITPIECE)) * ROOK_MIDGAME_VALUE;
-//     // 使用二次函数，子力很少时被认为是残局
-//     nMidgameValue = (2 * TOTAL_MIDGAME_VALUE - nMidgameValue) * nMidgameValue / TOTAL_MIDGAME_VALUE;
-//     PreEval.valueAdvanced = (TOTAL_ADVANCED_VALUE * nMidgameValue + TOTAL_ADVANCED_VALUE / 2) / TOTAL_MIDGAME_VALUE;
-//     for (sq = 0; sq < 256; sq++)
-//     {
-//         if (inBoard(sq))
-//         {
-//             PreEval.ucvlWhitePieces[0][sq] = PreEval.ucvlBlackPieces[0][254 - sq] = (uint8_t)
-//                 ((position_val[0][sq] * nMidgameValue + EndGame_val[0][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-//             PreEval.ucvlWhitePieces[3][sq] = PreEval.ucvlBlackPieces[3][254 - sq] = (uint8_t)
-//                 ((position_val[3][sq] * nMidgameValue + EndGame_val[3][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-//             PreEval.ucvlWhitePieces[4][sq] = PreEval.ucvlBlackPieces[4][254 - sq] = (uint8_t)
-//                 ((position_val[4][sq] * nMidgameValue + EndGame_val[4][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-//             PreEval.ucvlWhitePieces[5][sq] = PreEval.ucvlBlackPieces[5][254 - sq] = (uint8_t)
-//                 ((position_val[5][sq] * nMidgameValue + EndGame_val[5][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-//             ucvlPawnPiecesAttacking[sq] = (uint8_t)
-//                 ((position_val[6][sq] * nMidgameValue + EndGame_val[6][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-//             ucvlPawnPiecesAttackless[sq] = (uint8_t)
-//                 ((PawnMidgameAttackless[sq] * nMidgameValue + PawnEndgameAttackless[sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
-//         }
-//     }
+    uint8_t ucvlPawnPiecesAttacking[256], ucvlPawnPiecesAttackless[256];
+    // 开中局还是残局 //
+    // 计算各种棋子数量，车6，马炮3，其他1，时间要快，肯定不能用循环
+    nMidgameValue = PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ADVISOR_BITPIECE | BISHOP_BITPIECE | PAWN_BITPIECE)) * OTHER_MIDGAME_VALUE;
+    nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(KNIGHT_BITPIECE | CANNON_BITPIECE)) * KNIGHT_CANNON_MIDGAME_VALUE;
+    nMidgameValue += PopCnt32(this->dwBitPiece & BOTH_BITPIECE(ROOK_BITPIECE)) * ROOK_MIDGAME_VALUE;
+    // 使用二次函数，子力很少时被认为是残局
+    nMidgameValue = (2 * TOTAL_MIDGAME_VALUE - nMidgameValue) * nMidgameValue / TOTAL_MIDGAME_VALUE;
+    PreEval.valueAdvanced = (TOTAL_ADVANCED_VALUE * nMidgameValue + TOTAL_ADVANCED_VALUE / 2) / TOTAL_MIDGAME_VALUE;
+    for (sq = 0; sq < 256; sq++)
+    {
+        if (inBoard(sq))
+        {
+            PreEval.ucvlWhitePieces[0][sq] = PreEval.ucvlBlackPieces[0][254 - sq] = (uint8_t)
+                ((position_val[0][sq] * nMidgameValue + EndGame_val[0][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[3][sq] = PreEval.ucvlBlackPieces[3][254 - sq] = (uint8_t)
+                ((position_val[3][sq] * nMidgameValue + EndGame_val[3][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[4][sq] = PreEval.ucvlBlackPieces[4][254 - sq] = (uint8_t)
+                ((position_val[4][sq] * nMidgameValue + EndGame_val[4][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            PreEval.ucvlWhitePieces[5][sq] = PreEval.ucvlBlackPieces[5][254 - sq] = (uint8_t)
+                ((position_val[5][sq] * nMidgameValue + EndGame_val[5][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            ucvlPawnPiecesAttacking[sq] = (uint8_t)
+                ((position_val[6][sq] * nMidgameValue + EndGame_val[6][sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+            ucvlPawnPiecesAttackless[sq] = (uint8_t)
+                ((PawnMidgameAttackless[sq] * nMidgameValue + PawnEndgameAttackless[sq] * (TOTAL_MIDGAME_VALUE - nMidgameValue)) / TOTAL_MIDGAME_VALUE);
+        }
+    }
 
-//     // 进攻状态，计算过河棋子
-//     nWhiteAttacks = nBlackAttacks = 0;
-//     for (i = 16 + KNIGHT_FROM; i <= 16 + ROOK_TO; i++) {
-//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
-//             nWhiteAttacks += 2;
-//         }
-//     }
-//     for (i = 16 + CANNON_FROM; i <= 16 + PAWN_TO; i++) {
-//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
-//             nWhiteAttacks++;
-//         }
-//     }
-//     for (i = 32 + KNIGHT_FROM; i <= 32 + ROOK_TO; i++) {
-//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
-//             nBlackAttacks += 2;
-//         }
-//     }
-//     for (i = 32 + CANNON_FROM; i <= 32 + PAWN_TO; i++) {
-//         if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
-//             nBlackAttacks++;
-//         }
-//     }
+    // 进攻状态，计算过河棋子
+    nWhiteAttacks = nBlackAttacks = 0;
+    for (i = 16 + KNIGHT_FROM; i <= 16 + ROOK_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
+            nWhiteAttacks += 2;
+        }
+    }
+    for (i = 16 + CANNON_FROM; i <= 16 + PAWN_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 0) {
+            nWhiteAttacks++;
+        }
+    }
+    for (i = 32 + KNIGHT_FROM; i <= 32 + ROOK_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
+            nBlackAttacks += 2;
+        }
+    }
+    for (i = 32 + CANNON_FROM; i <= 32 + PAWN_TO; i++) {
+        if (this->chessView[i] != 0 && (this->chessView[i] >> 7) == 1) {
+            nBlackAttacks++;
+        }
+    }
 
-//     // 如果本方轻子数比对方多，那么每多一个轻子(车算2个轻子)威胁值加2。威胁值最多不超过8。
-//     nWhiteSimpleValue = PopCnt16(this->wBitPiece[0] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[0] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
-//     nBlackSimpleValue = PopCnt16(this->wBitPiece[1] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[1] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
-//     if (nWhiteSimpleValue > nBlackSimpleValue) {
-//         nWhiteAttacks += (nWhiteSimpleValue - nBlackSimpleValue) * 2;
-//     }
-//     else {
-//         nBlackAttacks += (nBlackSimpleValue - nWhiteSimpleValue) * 2;
-//     }
-//     nWhiteAttacks = min(nWhiteAttacks, TOTAL_ATTACK_VALUE);
-//     nBlackAttacks = min(nBlackAttacks, TOTAL_ATTACK_VALUE);
-//     // PreEvalEx.vlBlackAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nWhiteAttacks / TOTAL_ATTACK_VALUE;
-//     // PreEvalEx.vlWhiteAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nBlackAttacks / TOTAL_ATTACK_VALUE;
+    // 如果本方轻子数比对方多，那么每多一个轻子(车算2个轻子)威胁值加2。威胁值最多不超过8。
+    nWhiteSimpleValue = PopCnt16(this->wBitPiece[0] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[0] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
+    nBlackSimpleValue = PopCnt16(this->wBitPiece[1] & ROOK_BITPIECE) * 2 + PopCnt16(this->wBitPiece[1] & (KNIGHT_BITPIECE | CANNON_BITPIECE));
+    if (nWhiteSimpleValue > nBlackSimpleValue) {
+        nWhiteAttacks += (nWhiteSimpleValue - nBlackSimpleValue) * 2;
+    }
+    else {
+        nBlackAttacks += (nBlackSimpleValue - nWhiteSimpleValue) * 2;
+    }
+    nWhiteAttacks = min(nWhiteAttacks, TOTAL_ATTACK_VALUE);
+    nBlackAttacks = min(nBlackAttacks, TOTAL_ATTACK_VALUE);
+    // PreEvalEx.vlBlackAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nWhiteAttacks / TOTAL_ATTACK_VALUE;
+    // PreEvalEx.vlWhiteAdvisorLeakage = TOTAL_ADVISOR_LEAKAGE * nBlackAttacks / TOTAL_ATTACK_VALUE;
 
-//     for (sq = 0; sq < 256; sq++) {
-//         if (inBoard(sq)) {
-//             PreEval.ucvlWhitePieces[1][sq] = (uint8_t)((EndGame_val[1][sq] * nBlackAttacks + position_val[1][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-//             PreEval.ucvlWhitePieces[2][sq] = (uint8_t)((EndGame_val[2][sq] * nBlackAttacks + position_val[2][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-//             PreEval.ucvlBlackPieces[1][sq] = (uint8_t)((EndGame_val[1][254 - sq] * nWhiteAttacks + position_val[1][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-//             PreEval.ucvlBlackPieces[2][sq] = (uint8_t)((EndGame_val[2][254 - sq] * nWhiteAttacks + position_val[2][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-//             PreEval.ucvlWhitePieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[sq] * nWhiteAttacks + ucvlPawnPiecesAttackless[sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
-//             PreEval.ucvlBlackPieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[254 - sq] * nBlackAttacks + ucvlPawnPiecesAttackless[254 - sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
-//         }
-//     }
-//     // 对称先不写
-//     // 调整不受威胁方少掉的仕(士)相(象)分值
-//     // 不考虑升变
-//     this->valueRed = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nBlackAttacks) / TOTAL_ATTACK_VALUE;
-//     this->valueBlack = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nWhiteAttacks) / TOTAL_ATTACK_VALUE;
+    for (sq = 0; sq < 256; sq++) {
+        if (inBoard(sq)) {
+            PreEval.ucvlWhitePieces[1][sq] = (uint8_t)((EndGame_val[1][sq] * nBlackAttacks + position_val[1][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlWhitePieces[2][sq] = (uint8_t)((EndGame_val[2][sq] * nBlackAttacks + position_val[2][sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlBlackPieces[1][sq] = (uint8_t)((EndGame_val[1][254 - sq] * nWhiteAttacks + position_val[1][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlBlackPieces[2][sq] = (uint8_t)((EndGame_val[2][254 - sq] * nWhiteAttacks + position_val[2][254 - sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlWhitePieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[sq] * nWhiteAttacks + ucvlPawnPiecesAttackless[sq] * (TOTAL_ATTACK_VALUE - nWhiteAttacks)) / TOTAL_ATTACK_VALUE);
+            PreEval.ucvlBlackPieces[6][sq] = (uint8_t)((ucvlPawnPiecesAttacking[254 - sq] * nBlackAttacks + ucvlPawnPiecesAttackless[254 - sq] * (TOTAL_ATTACK_VALUE - nBlackAttacks)) / TOTAL_ATTACK_VALUE);
+        }
+    }
+    // 对称先不写
+    // 调整不受威胁方少掉的仕(士)相(象)分值
+    // 不考虑升变
+    this->valueRed = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nBlackAttacks) / TOTAL_ATTACK_VALUE;
+    this->valueBlack = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nWhiteAttacks) / TOTAL_ATTACK_VALUE;
     
     PreEval.valueAdvanced = 3;
     // 子力位置分
@@ -432,7 +432,7 @@ void Board::PreEvaluate(void) {
         sq = this->chessView[i];
         if (sq != 0)
         {
-            PreEval.ucvlWhitePieces[PieceType[i]][sq] = position_val[PieceType[i]][sq];
+            // PreEval.ucvlWhitePieces[PieceType[i]][sq] = position_val[PieceType[i]][sq];
             this->valueRed += PreEval.ucvlWhitePieces[PieceType[i]][sq];
         }
     }
@@ -441,7 +441,7 @@ void Board::PreEvaluate(void) {
         sq = this->chessView[i];
         if (sq != 0)
         {
-            PreEval.ucvlBlackPieces[PieceType[i]][sq] = position_val[PieceType[i]][254-sq];
+            // PreEval.ucvlBlackPieces[PieceType[i]][sq] = position_val[PieceType[i]][254-sq];
             this->valueBlack += PreEval.ucvlBlackPieces[PieceType[i]][sq];
         }
     }
