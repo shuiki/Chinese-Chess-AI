@@ -17,8 +17,8 @@ const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮"
 
 enum Player { BLACK, RED, NUL };
 
-const int MAX_MOV_NUM = 128;
-const int MAX_GEN_MVS = 128;
+const int MAX_MOV_NUM = 300;
+const int MAX_GEN_MVS = 300;
 
 ////////////////////
 const int DRAW_VALUE = 20;              // 和棋时返回的分数(取负值)

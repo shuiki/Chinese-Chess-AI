@@ -231,7 +231,7 @@ bool Board::makeMove(int_16 mv)//走一步棋，返回被吃掉的子
 	changeSide();
 	checked = isChecked(player);
 	pastMoves[pastMoveNum] = { mv,dp,checked,zobr };
-	MOVE_COORD(mv,pastMoves[pastMoveNum].show); 
+	MOVE_COORD(mv, (char*)&pastMoves[pastMoveNum].show);
 	pastMoveNum++;
 	distance++;
 	return true;
