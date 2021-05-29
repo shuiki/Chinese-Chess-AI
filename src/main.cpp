@@ -14,6 +14,7 @@ int main() {
 	printf("%s\n", "ucciok");
 	fflush(stdout);
 	//extern SearchInfo searchInfo;
+	InitZobrist();
 	searchInfo.board.clearBoard();
 	searchInfo.board.clearMoves();
 	searchInfo.board.distance = 0;

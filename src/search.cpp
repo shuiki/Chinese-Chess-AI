@@ -4,7 +4,7 @@ MoveSortStruct mvs;
 SearchInfo searchInfo;
 HashStruct HashTable[HASH_SIZE];
 const bool NO_NULL = false; // "SearchPV()"的参数，是否禁止空着裁剪
-
+using namespace std;
 // 重复裁剪
 int RepPruning(const Board& pos, int vlBeta) {
 	int vlRep = pos.RepStatus(1);
@@ -148,7 +148,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	nHashFlag = HASH_ALPHA;
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
-	while ((mv = MoveSort.Next()) != 0) {
+	while ((mv = MoveSort.Next()) != 0) {/////////////////////第二层genMove后面大量重复的同一步，看看怎么回事
 		if (searchInfo.board.makeMove(mv))
 		{
 			/*
@@ -162,7 +162,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			//int value = -SearchPV(depth - 1, -beta, -alpha);
 			nNewDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(-beta, -alpha, nNewDepth);
+				vl = -SearchPV(-beta, -alpha, nNewDepth);/////////////////repstatus那儿有问题，老是返回-20平局！
 			}
 			else {
 				vl = -SearchPV(-alpha - 1, -alpha, nNewDepth);
@@ -173,17 +173,21 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			searchInfo.board.undoMakeMove();
 			if (searchInfo.bStop)
 				return mvBest;
-			if (vl > beta) {
-				mvBest = mv;
-				nHashFlag = HASH_BETA;
-				break;
-			}
-
-			if (vl > alpha)
+			if (vl > vlBest)
 			{
-				mvBest = mv;
-				nHashFlag = HASH_PV;
-				alpha = vl;
+				vlBest = vl;
+				if (vl > beta) {
+					mvBest = mv;
+					nHashFlag = HASH_BETA;
+					break;
+				}
+
+				if (vl > alpha)
+				{
+					mvBest = mv;
+					nHashFlag = HASH_PV;
+					alpha = vl;
+				}
 			}
 		}
 		
@@ -195,7 +199,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
 	// 11. 更新置换表、历史表和杀手着法表。
-	if (vlBest == -MATE_VALUE) {
+	if (vlBest == -MATE_VALUE) {////////////////////////最后返回的杀棋来自这儿，一直没更新过vlBest
 		return searchInfo.board.distance - MATE_VALUE;
 	}
 	else {
@@ -255,6 +259,12 @@ int SearchRoot(int depth) {
 				searchInfo.bStop = true;
 			}
 		}
+		else {
+			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+			if (nCurrTimer > searchInfo.nMaxTimer) {
+				searchInfo.bStop = true;
+			}
+		}
 	}
 	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
 	fflush(stdout);
@@ -267,7 +277,7 @@ int SearchRoot(int depth) {
 主搜索函数
 思路：迭代加深搜索:主要深度优先遍历，利用已知结果
 ************************/
-void SearchMain(int depth)
+void SearchMain(int dep)
 {
 	//searchInfo.ClearHistory();
 	//for (int i = 0; i < depth; i++)
@@ -320,7 +330,7 @@ void SearchMain(int depth)
 	//}
 
 	// 3. 如果深度为零则返回静态搜索值
-	if (depth == 0) {
+	if (dep == 0) {
 		vl = Quies(searchInfo.board, -MATE_VALUE, MATE_VALUE);
 		//		vl = Evaluate(searchInfo.board);
 		if (searchInfo.bDebug) {
@@ -343,7 +353,8 @@ void SearchMain(int depth)
 	nCurrTimer = 0;
 	
 	// 5. 做迭代加深搜索
-	for (i = 1; i <= depth; i++) {
+	for (i = 1; i <= dep; i++) 
+	{
 		// 6. 搜索根结点
 		vl = SearchRoot(i);
 		if (searchInfo.bStop) {
@@ -353,7 +364,7 @@ void SearchMain(int depth)
 			break; // 没有跳出，则"vl"是可靠值
 		}
 		if (searchInfo.bDebug) {
-			printf("info depth %d score %d\n", i, vl);
+			printf("info depth %d mv %d score %d\n", i,searchInfo.mvResult, vl);
 			fflush(stdout);
 		}
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
@@ -371,7 +382,8 @@ void SearchMain(int depth)
 		vlLast = vl;
 
 		// 8. 搜索到杀棋则终止搜索
-		if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE) {
+		if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE) 
+		{
 			break;
 		}
 
@@ -385,11 +397,16 @@ void SearchMain(int depth)
 	char result[4];
 	MOVE_COORD(searchInfo.mvResult,result);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
-	//printf("%d\n",searchInfo.mvResult);
+	//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
 	fflush(stdout);
-	//if (searchInfo.bDebug)
-		//searchInfo.board.drawBoard();
+	if (searchInfo.bDebug)
+		searchInfo.board.drawBoard();
 }
+
+/*
+position fen 1n1k1abnr/9/1c5c1/8p/9/p8/P5p1P/BC3CN1R/2p6/1p1AK4 w - - 0 28 moves
+go time 60000
+*/
 
 /*
 position fen 3akabnr/9/P1c1b4/4p1p1p/9/2p1P4/6PcP/N3K2CR/9/R1Br5 r - - 2 14 moves a7a8 d0e0

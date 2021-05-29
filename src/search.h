@@ -76,11 +76,13 @@ public:
 	int bestmv;	//计算出来的最好走法
 	State state;
 	int mvHash, mvKiller1, mvKiller2; // 置换表走法和两个杀手走法
+	int index;
 	void Init(int mvHash_) { // 初始化，设定置换表走法和两个杀手走法
 		mvHash = mvHash_;
+		index = 0;
 		mvKiller1 = searchInfo.wmvKiller[searchInfo.board.distance][0];
 		mvKiller2 = searchInfo.wmvKiller[searchInfo.board.distance][1];
-		state = AllSearchState;
+		state = HashState;
 	}
 	int Next();
 };
@@ -114,11 +116,12 @@ inline void SearchInfo::SetBestMove(int mv, int nDepth, uint16_t* lpwmvKiller) {
 
 //bool CompareHistory(const int lpmv1, const int lpmv2);
 inline int MoveSortStruct::Next() {
-	static int index = 0;
+	//index = 0;
 	switch (state) {
 	case HashState:
 		state = PHASE_KILLER_1;
-		return bestmv;
+		if (mvHash != 0)
+			return mvHash;
 	case PHASE_KILLER_1:
 		state = PHASE_KILLER_2;
 		if (mvKiller1 != mvHash && mvKiller1 != 0 && searchInfo.board.isLegalMove(mvKiller1)) {
@@ -137,7 +140,7 @@ inline int MoveSortStruct::Next() {
 	case OdinaryState:
 		while (index > 0) {
 			int mv = mvs[--index];
-			if (mv != bestmv)
+			if (mv != mvHash && mv != mvKiller1 && mv != mvKiller2)
 				return mv;
 		}
 	default:

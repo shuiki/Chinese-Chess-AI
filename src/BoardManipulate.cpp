@@ -254,13 +254,13 @@ void Board::undoMakeMove()//撤销一步棋，参数是被吃掉的棋子
 }
 
 
-void Board::refreshBoard(const char* fen, int posLen,const char* moves, int movNum, char side)//根据ucci串更新棋盘
+void Board::refreshBoard(const char* fen, int posLen, const char* moves, int movNum, char side)//根据ucci串更新棋盘
 {
 	clearBoard();
 	int_8 boardPos = 51, strPos = 0;
 	int_8 blacks[7] = { 32,33,35,37,39,41,43 };
 	int_8 reds[7] = { 16,17,19,21,23,25,27 };
-	if (side == 'r')
+	if (side == 'r'||side=='w')
 		player = RED;
 	else if (side == 'b')
 		player = BLACK;
@@ -746,3 +746,7 @@ int main()
 */
 
 //h2e2 h9g7
+/*
+position fen rnbakabnr/4c4/9/9/2PP2P2/P7P/9/1C3C3/9/1RBAKABNR b - - 0 13 moves
+go time 60000
+*/

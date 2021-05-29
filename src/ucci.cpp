@@ -71,7 +71,7 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 	//如果读到position指令，着法列表保存在UcciComm里
 	else if (strncmp(lp, "position ", 9) == 0) {
 		lp += 9;
-		if (strncmp(lp, "startpos ", 9) == 0) {
+		if (strncmp(lp, "startpos ", 8) == 0) {
 			lp += 9;
 			UcciComm.position.Fen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r";
 			UcciComm.position.player = 'r';
