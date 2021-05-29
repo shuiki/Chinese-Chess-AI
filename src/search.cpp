@@ -1,4 +1,6 @@
 #include"search.h"
+#include"search.h"
+#include "book.h"
 
 MoveSortStruct mvs;
 SearchInfo searchInfo;
@@ -20,28 +22,28 @@ static int value_MVV[24] = {
   5, 1, 1, 3, 4, 3, 2, 0,
   5, 1, 1, 3, 4, 3, 2, 0
 };
- int get_value(int mv)
+int get_value(int mv)
 {
 	return (value_MVV[searchInfo.board.chessBoard[getDST(mv)]] << 3) - value_MVV[searchInfo.board.chessBoard[getSRC(mv)]];
 }
 
-bool Compare_MVV(const int lpmv1, const int lpmv2) 
+bool Compare_MVV(const int lpmv1, const int lpmv2)
 {
 	if (get_value(lpmv1) > get_value(lpmv2))
 		return true;
-	else 
+	else
 		return false;
 }
 
 // 静态搜索
- int Quies(Board& pos, int Alpha, int Beta) {
+int Quies(Board& pos, int Alpha, int Beta) {
 
-	 // 达到极限深度，直接返回局面评价值；
-	 if (pos.distance == LIMIT_DEPTH) {
-		 return  pos.Evaluate();
-	 }
+	// 达到极限深度，直接返回局面评价值；
+	if (pos.distance == LIMIT_DEPTH) {
+		return  pos.Evaluate();
+	}
 
-	int val, Move_num=0,val_best= -MATE_VALUE;
+	int val, Move_num = 0, val_best = -MATE_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
 
 	// 重复裁剪；
@@ -49,15 +51,15 @@ bool Compare_MVV(const int lpmv1, const int lpmv2)
 	if (val > -MATE_VALUE) {
 		return val;
 	}
-	if (val > Alpha) 
+	if (val > Alpha)
 		Alpha = val;
 	// 被将军局面:
 	if (pos.lastCheck()) {
-		Move_num = pos.genMoves(mvs);
+		Move_num = pos.gemove_num(mvs);
 		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
 	// 未被将军局面:
-	else {		
+	else {
 		val = pos.Evaluate();
 		if (val >= Beta) {
 			return val;
@@ -66,7 +68,7 @@ bool Compare_MVV(const int lpmv1, const int lpmv2)
 		if (val > Alpha) {
 			Alpha = val;
 		}
-		Move_num = pos.genMoves(mvs, true);
+		Move_num = pos.gemove_num(mvs, true);
 		std::sort(mvs, mvs + Move_num, Compare_MVV);
 	}
 	// 对生成着法进行A-B搜索
@@ -96,7 +98,7 @@ bool Compare_MVV(const int lpmv1, const int lpmv2)
 	}
 
 	return (val_best == -MATE_VALUE) ? pos.distance - MATE_VALUE : val_best;
-	
+
 }
 
 /*******************
@@ -108,7 +110,7 @@ beta:本层节点最小值 alpha:上一层节点值
 **********************/
 static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
-	int vl,vlBest,nHashFlag;
+	int vl, vlBest, nHashFlag;
 	int nNewDepth, nCurrTimer;
 	uint16_t mvBest, mvHash, mv;
 	MoveSortStruct MoveSort;
@@ -116,9 +118,9 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	if (depth <= 0)
 		//return searchInfo.board.valueRed - searchInfo.board.valueBlack;
 		return Quies(searchInfo.board, alpha, beta);
-		//return Evaluate(searchInfo.board);
-	
-	// 2. 重复裁剪；
+	//return Evaluate(searchInfo.board);
+
+// 2. 重复裁剪；
 	vl = RepPruning(searchInfo.board, beta);
 	if (vl > -MATE_VALUE) {//-MATE_VALUE是重复的特定返回值
 		return vl;
@@ -134,9 +136,9 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		return searchInfo.board.Evaluate();
 	}
 	// 5. 尝试空着裁剪；
-	if (bNoNull&& !searchInfo.board.lastCheck()){ //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
+	if (bNoNull && !searchInfo.board.lastCheck()) { //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
 		searchInfo.board.nullMove();
-		vl = -SearchPV(depth - NULL_DEPTH - 1 ,-beta, 1 - beta,NO_NULL);
+		vl = -SearchPV(depth - NULL_DEPTH - 1, -beta, 1 - beta, NO_NULL);
 		searchInfo.board.undoNullMove();
 
 		if (vl >= beta) {
@@ -166,7 +168,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			}
 			else {
 				vl = -SearchPV(-alpha - 1, -alpha, nNewDepth);
-				if (vl > alpha && vl < beta) {
+				if (vl > alpha&& vl < beta) {
 					vl = -SearchPV(-beta, -alpha, nNewDepth);
 				}
 			}
@@ -190,7 +192,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 				}
 			}
 		}
-		
+
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
 		if (nCurrTimer > searchInfo.nMaxTimer) {
 			searchInfo.bStop = true;
@@ -292,42 +294,43 @@ void SearchMain(int dep)
 	int i, vl, vlLast;
 	int nCurrTimer, nLimitTimer;
 	int nBookMoves;
-	//BookStruct bks[MAX_GEN_MOVES];
+	BookStruct bks[MAX_GEN_MVS];
 	// 主搜索例程包括以下几个步骤：
 
 
 // 2. 从开局库中搜索着法
-	//if (searchInfo.bUseBook) {
-	//	// a. 获取开局库中的所有走法
-	//	nBookMoves = GetBookMoves(searchInfo.board, bks);
-	//	if (nBookMoves > 0) {
-	//		vl = 0;
-	//		for (i = 0; i < nBookMoves; i++) {
-	//			vl += bks[i].wvl;
-	//		}
-	//		// b. 根据权重随机选择一个走法
-	//		vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
-	//		for (i = 0; i < nBookMoves; i++) {
-	//			vl -= bks[i].wvl;
-	//			if (vl < 0) {
-	//				break;
-	//			}
-	//		}
-	//		// c. 如果开局库中的着法构成循环局面，那么不走这个着法
-	//		searchInfo.board.makeMove(bks[i].wmv);
-	//		if (searchInfo.board.RepStatus(3) == 0) {
-	//			searchInfo.mvResult = bks[i].wmv;
-	//			searchInfo.board.undoMakeMove();
-	//			uint32_t result = MOVE_COORD(searchInfo.mvResult);
-	//			printf("bestmove %.4s\n", (const char*)&result);
-	//			fflush(stdout);
-	//			if (searchInfo.bDebug)
-	//				searchInfo.board.drawBoard();
-	//			return;
-	//		}
-	//		searchInfo.board.undoMakeMove();
-	//	}
-	//}
+	if (searchInfo.bUseBook) {
+		// a. 获取开局库中的所有走法
+		nBookMoves = GetBookMoves(searchInfo.board, bks);
+		if (nBookMoves > 0) {
+			vl = 0;
+			for (i = 0; i < nBookMoves; i++) {
+				vl += bks[i].wvl;
+			}
+			// b. 根据权重随机选择一个走法
+			vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
+			for (i = 0; i < nBookMoves; i++) {
+				vl -= bks[i].wvl;
+				if (vl < 0) {
+					break;
+				}
+			}
+			// c. 如果开局库中的着法构成循环局面，那么不走这个着法
+			searchInfo.board.makeMove(bks[i].wmv);
+			if (searchInfo.board.RepStatus(3) == 0) {
+				searchInfo.mvResult = bks[i].wmv;
+				searchInfo.board.undoMakeMove();
+				char result[4];
+				MOVE_COORD(searchInfo.mvResult, result);//将结果转化为可输出字符串 int->char*
+				printf("bestmove %.4s\n", (const char*)&result);
+				fflush(stdout);
+				if (searchInfo.bDebug)
+					searchInfo.board.drawBoard();
+				return;
+			}
+			searchInfo.board.undoMakeMove();
+		}
+	}
 
 	// 3. 如果深度为零则返回静态搜索值
 	if (dep == 0) {
@@ -351,9 +354,9 @@ void SearchMain(int dep)
 	searchInfo.llTime = GetTime();
 	vlLast = 0;
 	nCurrTimer = 0;
-	
+
 	// 5. 做迭代加深搜索
-	for (i = 1; i <= dep; i++) 
+	for (i = 1; i <= dep; i++)
 	{
 		// 6. 搜索根结点
 		vl = SearchRoot(i);
@@ -364,7 +367,7 @@ void SearchMain(int dep)
 			break; // 没有跳出，则"vl"是可靠值
 		}
 		if (searchInfo.bDebug) {
-			printf("info depth %d mv %d score %d\n", i,searchInfo.mvResult, vl);
+			printf("info depth %d mv %d score %d\n", i, searchInfo.mvResult, vl);
 			fflush(stdout);
 		}
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
@@ -382,7 +385,7 @@ void SearchMain(int dep)
 		vlLast = vl;
 
 		// 8. 搜索到杀棋则终止搜索
-		if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE) 
+		if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE)
 		{
 			break;
 		}
@@ -395,7 +398,7 @@ void SearchMain(int dep)
 	searchInfo.board.drawBoard();*/
 	searchInfo.board.makeMove(searchInfo.mvResult);
 	char result[4];
-	MOVE_COORD(searchInfo.mvResult,result);//将结果转化为可输出字符串 int->char*
+	MOVE_COORD(searchInfo.mvResult, result);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
 	//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
 	fflush(stdout);

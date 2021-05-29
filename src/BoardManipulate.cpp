@@ -487,7 +487,7 @@ void Board::clearMoves()
 	pastMoves[0] = { 0,0,checked,zobr };
 }
 
-int Board::genMoves(int_16* mvs, bool captureOnly)//生成走法，返回走法数
+int Board::gemove_num(int_16* mvs, bool captureOnly)//生成走法，返回走法数
 {
 	int_8 curPos, curPiece, curType;
 	int mvNum = 0;
@@ -665,8 +665,8 @@ void RC4::InitZero(void) {
 }
 
 int_8 RC4::NextByte(void) {
-	x = (x + 1) & 255;
-	y = (y + s[x]) & 255;
+	this->x = (this->x + 1) & 255;
+	this->y = (this->y + s[x]) & 255;
 	std::swap(s[x], s[y]);
 	return s[(s[x] + s[y]) & 255];
 }
@@ -737,11 +737,11 @@ int main()
 		}
 		else if (c[0] == 't')
 		{
-			printf("%d\n", myboard.genMoves(mvs));
+			printf("%d\n", myboard.gemove_num(mvs));
 		}
 		else if (c[0] == 's')
 		{
-			printf("%d\n", myboard.genMoves(mvs,true));
+			printf("%d\n", myboard.gemove_num(mvs,true));
 		}
 		else
 		{

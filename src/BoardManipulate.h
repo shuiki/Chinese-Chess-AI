@@ -137,7 +137,12 @@ class ZobristNode {
 public:
 	int_32 key, lock_1, lock_2;//zobrist校验码和校验锁
 	void init() { key = 0; lock_1 = 0; lock_2 = 0; }
-	void initWithRC4(RC4 src) { key = src.NextLong(); lock_1 = src.NextLong(); lock_2 = src.NextLong(); }
+	void initWithRC4(RC4 &src) 
+	{ 
+		key = src.NextLong(); 
+		lock_1 = src.NextLong(); 
+		lock_2 = src.NextLong(); 
+	}
 	void XOR(ZobristNode a) { key = key ^ a.key; lock_1 = lock_1 ^ a.lock_1; lock_2 = lock_2 ^ a.lock_2; }
 };
 
@@ -207,7 +212,7 @@ public:
 		pastMoveNum--;
 		changeSide();
 	}
-	int genMoves(int_16* mvs, bool captureOnly = false);//生成走法，返回走法数
+	int gemove_num(int_16* mvs, bool captureOnly = false);//生成走法，返回走法数
 	void clearBoard();
 	void clearMoves();
 	void mirror(Board& mirror) const;

@@ -135,7 +135,7 @@ inline int MoveSortStruct::Next() {
 		}
 	case AllSearchState:
 		state = OdinaryState;
-		index = searchInfo.board.genMoves(mvs);
+		index = searchInfo.board.gemove_num(mvs);
 		sort(mvs, mvs + index, CompareHistory);
 	case OdinaryState:
 		while (index > 0) {
