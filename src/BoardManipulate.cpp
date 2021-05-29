@@ -211,6 +211,8 @@ void Board::changeSide()
 
 bool Board::makeMove(int_16 mv)//走一步棋，返回被吃掉的子
 {
+	if (!isLegalMove(mv))
+		return false;
 	int_8 src = getSRC(mv);
 	int_8 dst = getDST(mv);
 	int_8 sp = chessBoard[src];
@@ -257,7 +259,8 @@ void Board::undoMakeMove()//撤销一步棋，参数是被吃掉的棋子
 void Board::refreshBoard(const char* fen, int posLen, const char* moves, int movNum, char side)//根据ucci串更新棋盘
 {
 	clearBoard();
-	int_8 boardPos = 51, strPos = 0;
+	int_8 boardPos = 51;
+	int strPos = 0;
 	int_8 blacks[7] = { 32,33,35,37,39,41,43 };
 	int_8 reds[7] = { 16,17,19,21,23,25,27 };
 	if (side == 'r'||side=='w')
