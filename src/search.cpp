@@ -5,40 +5,41 @@
 MoveSortStruct mvs;
 SearchInfo searchInfo;
 HashStruct HashTable[HASH_SIZE];
-const bool NO_NULL = false; // "SearchPV()"µÄ²ÎÊı£¬ÊÇ·ñ½ûÖ¹¿Õ×Å²Ã¼ô
+const bool NO_NULL = false; // "SearchPV()"çš„å‚æ•°ï¼Œæ˜¯å¦ç¦æ­¢ç©ºç€è£å‰ª
 using namespace std;
-// ÖØ¸´²Ã¼ô
-int RepPruning(const Board& pos, int vlBeta) {
+
+
+// åå‰ªæï¼Œå‰ªå»é‡å¤å±€é¢å’Œè¾ƒå·®å±€é¢
+int prune(const Board& pos) {
+	//æŸ¥æ‰¾
 	int vlRep = pos.RepStatus(1);
+	//å­˜åœ¨é‡å¤å±€é¢ï¼Œä¸åŒé‡å¤å±€é¢å¯¹åº”ä¸åŒä¼°å€¼
 	if (vlRep > 0) {
 		return pos.RepValue(vlRep);
 	}
+	//ä¸å­˜åœ¨é‡å¤å±€é¢
 	return -MATE_VALUE;
 }
 
-// MVV/LVAÃ¿ÖÖ×ÓÁ¦µÄ¼ÛÖµ
-static int value_MVV[24] = {
-  0, 0, 0, 0, 0, 0, 0, 0,
-  5, 1, 1, 3, 4, 3, 2, 0,
-  5, 1, 1, 3, 4, 3, 2, 0
-};
-int get_value(int mv)
-{
-	return (value_MVV[searchInfo.board.chessBoard[getDST(mv)]] << 3) - value_MVV[searchInfo.board.chessBoard[getSRC(mv)]];
+
+// MVVæ¯ç§å­åŠ›ä»·å€¼ï¼š
+static int MVV_value[24] = { 0, 0, 0, 0, 0, 0, 0, 0,5, 1, 1, 3, 4, 3, 2, 0,5, 1, 1, 3, 4, 3, 2, 0 };
+
+inline int value(int mv){
+	return (8 * MVV_value[searchInfo.board.chessBoard[getDST(mv)]]) - MVV_value[searchInfo.board.chessBoard[getSRC(mv)]];
 }
 
-bool Compare_MVV(const int lpmv1, const int lpmv2)
-{
-	if (get_value(lpmv1) > get_value(lpmv2))
+inline bool Compare_MVV(const int lpmv1, const int lpmv2){
+	if (value(lpmv1) > value(lpmv2))
 		return true;
 	else
 		return false;
 }
 
-// ¾²Ì¬ËÑË÷
+// é™æ€æœç´¢
 int Quies(Board& pos, int Alpha, int Beta) {
 
-	// ´ïµ½¼«ÏŞÉî¶È£¬Ö±½Ó·µ»Ø¾ÖÃæÆÀ¼ÛÖµ£»
+	// è¾¾åˆ°æé™æ·±åº¦ï¼Œç›´æ¥è¿”å›ï¼›
 	if (pos.distance == LIMIT_DEPTH) {
 		return  pos.Evaluate();
 	}
@@ -46,42 +47,34 @@ int Quies(Board& pos, int Alpha, int Beta) {
 	int val, Move_num = 0, val_best = -MATE_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
 
-	// ÖØ¸´²Ã¼ô£»
-	val = RepPruning(pos, Beta);
+	// é‡å¤è£å‰ªï¼›æœ‰é‡å¤å±€é¢ç›´æ¥è¿”å›ä¼°å€¼
+	val = prune(pos);
 	if (val > -MATE_VALUE) {
 		return val;
 	}
 	if (val > Alpha)
 		Alpha = val;
-	// ±»½«¾ü¾ÖÃæ:
+	//æ— é‡å¤å±€é¢ï¼š
+
+	// è¢«å°†å†›å±€é¢:
 	if (pos.lastCheck()) {
 		Move_num = pos.gemove_num(mvs);
 		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
-	// Î´±»½«¾ü¾ÖÃæ:
+	// æœªè¢«å°†å†›å±€é¢:
 	else {
 		val = pos.Evaluate();
-		if (val >= Beta) {
+		if (val >= Beta) 
 			return val;
-		}
 		val_best = val;
-		if (val > Alpha) {
+		if (val > Alpha) 
 			Alpha = val;
-		}
 		Move_num = pos.gemove_num(mvs, true);
 		std::sort(mvs, mvs + Move_num, Compare_MVV);
 	}
-	// ¶ÔÉú³É×Å·¨½øĞĞA-BËÑË÷
+	// å¯¹ç”Ÿæˆç€æ³•A-Bæœç´¢
 	for (int i = 0; i < Move_num; i++) {
-		if (pos.makeMove(mvs[i]))
-		{	/*
-			//±»½«¾ü¾ÖÃæÔò²»½øĞĞËÑË÷£º
-			if (pos.isChecked(pos.player)){
-				pos.undoMakeMove();
-				continue;
-			}
-			//Î´±»½«¾ü¾ÖÃæ£º
-			*/
+		if (pos.makeMove(mvs[i])){	
 			val = -Quies(pos, -Beta, -Alpha);
 			if (val > val_best) {
 				if (val >= Beta)
@@ -98,15 +91,14 @@ int Quies(Board& pos, int Alpha, int Beta) {
 	}
 
 	return (val_best == -MATE_VALUE) ? pos.distance - MATE_VALUE : val_best;
-
 }
 
 /*******************
-ÏŞÖÆ¿í¶ÈµÄÉî¶ÈÓÅÏÈËÑË÷£¨µü´úÉî¶ÈÓÅÏÈËÑË÷µÄÒ»²½£©ÓÃalpha-betaËã·¨ÊµÏÖ
-¸ù¾İsearchInfoÖĞmvs.mvsÖĞ´æ´¢µÄËùÓĞ×ß·¨¼°Ë³Ğò£¬
-beta:±¾²ã½Úµã×îĞ¡Öµ alpha:ÉÏÒ»²ã½ÚµãÖµ
-É¢ÁĞÏîÀïµ½µ×Òª±£´æÊ²Ã´Öµ£¬²¢ÇÒµ±ÄãÒª»ñÈ¡ËüÊ±ÔõÑùÀ´×ö¡£
-´ğ°¸ÊÇ´¢´æÒ»¸öÖµ£¬Áí¼ÓÒ»¸ö±êÖ¾À´ËµÃ÷Õâ¸öÖµÊÇÊ²Ã´º¬Òå¡£
+é™åˆ¶å®½åº¦çš„æ·±åº¦ä¼˜å…ˆæœç´¢ï¼ˆè¿­ä»£æ·±åº¦ä¼˜å…ˆæœç´¢çš„ä¸€æ­¥ï¼‰ç”¨alpha-betaç®—æ³•å®ç°
+æ ¹æ®searchInfoä¸­mvs.mvsä¸­å­˜å‚¨çš„æ‰€æœ‰èµ°æ³•åŠé¡ºåºï¼Œ
+beta:æœ¬å±‚èŠ‚ç‚¹æœ€å°å€¼ alpha:ä¸Šä¸€å±‚èŠ‚ç‚¹å€¼
+æ•£åˆ—é¡¹é‡Œåˆ°åº•è¦ä¿å­˜ä»€ä¹ˆå€¼ï¼Œå¹¶ä¸”å½“ä½ è¦è·å–å®ƒæ—¶æ€æ ·æ¥åšã€‚
+ç­”æ¡ˆæ˜¯å‚¨å­˜ä¸€ä¸ªå€¼ï¼Œå¦åŠ ä¸€ä¸ªæ ‡å¿—æ¥è¯´æ˜è¿™ä¸ªå€¼æ˜¯ä»€ä¹ˆå«ä¹‰ã€‚
 **********************/
 static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
@@ -114,28 +106,28 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	int nNewDepth, nCurrTimer;
 	uint16_t mvBest, mvHash, mv;
 	MoveSortStruct MoveSort;
-	// 1. ÔÚÒ¶×Ó½áµã´¦µ÷ÓÃ¾²Ì¬ËÑË÷£»
+	// 1. åœ¨å¶å­ç»“ç‚¹å¤„è°ƒç”¨é™æ€æœç´¢ï¼›
 	if (depth <= 0)
 		//return searchInfo.board.valueRed - searchInfo.board.valueBlack;
 		return Quies(searchInfo.board, alpha, beta);
 	//return Evaluate(searchInfo.board);
 
-// 2. ÖØ¸´²Ã¼ô£»
-	vl = RepPruning(searchInfo.board, beta);
-	if (vl > -MATE_VALUE) {//-MATE_VALUEÊÇÖØ¸´µÄÌØ¶¨·µ»ØÖµ
+// 2. é‡å¤è£å‰ªï¼›
+	vl = prune(searchInfo.board);
+	if (vl > -MATE_VALUE) {//-MATE_VALUEæ˜¯é‡å¤çš„ç‰¹å®šè¿”å›å€¼
 		return vl;
 	}
-	// 3. ÖÃ»»²Ã¼ô£»Èç¹û¸ÃËÑË÷½ÚµãÔÚÖÃ»»±íÖĞ³öÏÖ
+	// 3. ç½®æ¢è£å‰ªï¼›å¦‚æœè¯¥æœç´¢èŠ‚ç‚¹åœ¨ç½®æ¢è¡¨ä¸­å‡ºç°
 	vl = probeHash(searchInfo.board, depth, alpha, beta, mvHash);
 	if (searchInfo.bUseHash && vl > -MATE_VALUE) {
-		// ÓÉÓÚPV½áµã²»ÊÊÓÃÖÃ»»²Ã¼ô£¬ËùÒÔ²»»á·¢ÉúPVÂ·ÏßÖĞ¶ÏµÄÇé¿ö
+		// ç”±äºPVç»“ç‚¹ä¸é€‚ç”¨ç½®æ¢è£å‰ªï¼Œæ‰€ä»¥ä¸ä¼šå‘ç”ŸPVè·¯çº¿ä¸­æ–­çš„æƒ…å†µ
 		return vl;
 	}
-	// 4. ´ïµ½¼«ÏŞÉî¶È£¬Ö±½Ó·µ»ØÆÀ¼ÛÖµ£»
+	// 4. è¾¾åˆ°æé™æ·±åº¦ï¼Œç›´æ¥è¿”å›è¯„ä»·å€¼ï¼›
 	if (searchInfo.board.distance == LIMIT_DEPTH) {
 		return searchInfo.board.Evaluate();
 	}
-	// 5. ³¢ÊÔ¿Õ×Å²Ã¼ô£»
+	// 5. å°è¯•ç©ºç€è£å‰ªï¼›
 	if (bNoNull && !searchInfo.board.lastCheck()) { //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
 		searchInfo.board.nullMove();
 		vl = -SearchPV(depth - NULL_DEPTH - 1, -beta, 1 - beta, NO_NULL);
@@ -145,16 +137,16 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			return vl;
 		}
 	}
-	// 6. ³õÊ¼»¯£»
+	// 6. åˆå§‹åŒ–ï¼›
 	mvBest = 0;
 	nHashFlag = HASH_ALPHA;
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
-	while ((mv = MoveSort.Next()) != 0) {/////////////////////µÚ¶ş²ãgenMoveºóÃæ´óÁ¿ÖØ¸´µÄÍ¬Ò»²½£¬¿´¿´ÔõÃ´»ØÊÂ
+	while ((mv = MoveSort.Next()) != 0) {/////////////////////ç¬¬äºŒå±‚genMoveåé¢å¤§é‡é‡å¤çš„åŒä¸€æ­¥ï¼Œçœ‹çœ‹æ€ä¹ˆå›äº‹
 		if (searchInfo.board.makeMove(mv))
 		{
 			/*
-			//Èô±»½«¾üÔò²»³¢ÊÔ
+			//è‹¥è¢«å°†å†›åˆ™ä¸å°è¯•
 			if (searchInfo.board.isChecked(searchInfo.board.player))
 			{
 				searchInfo.board.undoMakeMove();
@@ -164,7 +156,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			//int value = -SearchPV(depth - 1, -beta, -alpha);
 			nNewDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(-beta, -alpha, nNewDepth);/////////////////repstatusÄÇ¶ùÓĞÎÊÌâ£¬ÀÏÊÇ·µ»Ø-20Æ½¾Ö£¡
+				vl = -SearchPV(-beta, -alpha, nNewDepth);/////////////////repstatusé‚£å„¿æœ‰é—®é¢˜ï¼Œè€æ˜¯è¿”å›-20å¹³å±€ï¼
 			}
 			else {
 				vl = -SearchPV(-alpha - 1, -alpha, nNewDepth);
@@ -200,8 +192,8 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	}
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
-	// 11. ¸üĞÂÖÃ»»±í¡¢ÀúÊ·±íºÍÉ±ÊÖ×Å·¨±í¡£
-	if (vlBest == -MATE_VALUE) {////////////////////////×îºó·µ»ØµÄÉ±ÆåÀ´×ÔÕâ¶ù£¬Ò»Ö±Ã»¸üĞÂ¹ıvlBest
+	// 11. æ›´æ–°ç½®æ¢è¡¨ã€å†å²è¡¨å’Œæ€æ‰‹ç€æ³•è¡¨ã€‚
+	if (vlBest == -MATE_VALUE) {////////////////////////æœ€åè¿”å›çš„æ€æ£‹æ¥è‡ªè¿™å„¿ï¼Œä¸€ç›´æ²¡æ›´æ–°è¿‡vlBest
 		return searchInfo.board.distance - MATE_VALUE;
 	}
 	else {
@@ -215,31 +207,31 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 }
 int SearchRoot(int depth) {
 	int nNewDepth, vlBest, vl, mv, nCurrTimer;
-	// ¸ù½áµãËÑË÷Àı³Ì°üÀ¨ÒÔÏÂ¼¸¸ö²½Öè£º
-	// 1. ³õÊ¼»¯
+	// æ ¹ç»“ç‚¹æœç´¢ä¾‹ç¨‹åŒ…æ‹¬ä»¥ä¸‹å‡ ä¸ªæ­¥éª¤ï¼š
+	// 1. åˆå§‹åŒ–
 	vlBest = -MATE_VALUE;
 	mvs.Init(searchInfo.mvResult);
-	// 2. ÖğÒ»ËÑË÷Ã¿¸ö×Å·¨
+	// 2. é€ä¸€æœç´¢æ¯ä¸ªç€æ³•
 	while ((mv = mvs.Next()) != 0) {
 		if (searchInfo.board.makeMove(mv))
 		{
 			/*
-			//Èô±»½«¾üÔò²»³¢ÊÔ
+			//è‹¥è¢«å°†å†›åˆ™ä¸å°è¯•
 			if (searchInfo.board.isChecked(searchInfo.board.player))
 			{
 				searchInfo.board.undoMakeMove();
 				continue;
 			}
 			*/
-			// 3. ³¢ÊÔÑ¡ÔñĞÔÑÓÉì(Ö»¿¼ÂÇ½«¾üÑÓÉì)
+			// 3. å°è¯•é€‰æ‹©æ€§å»¶ä¼¸(åªè€ƒè™‘å°†å†›å»¶ä¼¸)
 			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
-			// 4. Ö÷Òª±äÀıËÑË÷
+			// 4. ä¸»è¦å˜ä¾‹æœç´¢
 			if (vlBest == -MATE_VALUE) {
 				vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
 			}
 			else {
 				vl = -SearchPV(nNewDepth, -vlBest - 1, -vlBest);
-				if (vl > vlBest) { // ÕâÀï²»ĞèÒª" && vl < MATE_VALUE"ÁË
+				if (vl > vlBest) { // è¿™é‡Œä¸éœ€è¦" && vl < MATE_VALUE"äº†
 					vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest, NO_NULL);
 				}
 			}
@@ -247,12 +239,12 @@ int SearchRoot(int depth) {
 			if (searchInfo.bStop) {
 				return vlBest;
 			}
-			// 5. Alpha-Beta±ß½çÅĞ¶¨("vlBest"´úÌæÁË"SearchPV()"ÖĞµÄ"vlAlpha")
+			// 5. Alpha-Betaè¾¹ç•Œåˆ¤å®š("vlBest"ä»£æ›¿äº†"SearchPV()"ä¸­çš„"vlAlpha")
 			if (vl > vlBest) {
-				// 6. Èç¹ûËÑË÷µ½µÚÒ»×Å·¨£¬ÄÇÃ´"Î´¸Ä±ä×î¼Ñ×Å·¨"µÄ¼ÆÊıÆ÷¼Ó1£¬·ñÔòÇåÁã
+				// 6. å¦‚æœæœç´¢åˆ°ç¬¬ä¸€ç€æ³•ï¼Œé‚£ä¹ˆ"æœªæ”¹å˜æœ€ä½³ç€æ³•"çš„è®¡æ•°å™¨åŠ 1ï¼Œå¦åˆ™æ¸…é›¶
 				searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
 				vlBest = vl;
-				// 7. ËÑË÷µ½×î¼Ñ×Å·¨Ê±¼ÇÂ¼Ö÷Òª±äÀı
+				// 7. æœç´¢åˆ°æœ€ä½³ç€æ³•æ—¶è®°å½•ä¸»è¦å˜ä¾‹
 				searchInfo.mvResult = mv;
 			}
 
@@ -276,8 +268,8 @@ int SearchRoot(int depth) {
 	return vlBest;
 }
 /***********************
-Ö÷ËÑË÷º¯Êı
-Ë¼Â·£ºµü´ú¼ÓÉîËÑË÷:Ö÷ÒªÉî¶ÈÓÅÏÈ±éÀú£¬ÀûÓÃÒÑÖª½á¹û
+ä¸»æœç´¢å‡½æ•°
+æ€è·¯ï¼šè¿­ä»£åŠ æ·±æœç´¢:ä¸»è¦æ·±åº¦ä¼˜å…ˆéå†ï¼Œåˆ©ç”¨å·²çŸ¥ç»“æœ
 ************************/
 void SearchMain(int dep)
 {
@@ -286,7 +278,7 @@ void SearchMain(int dep)
 	//{
 	//	SearchRoot(i);
 
-	//	// ËÑË÷µ½É±ÆåÔòÖÕÖ¹ËÑË÷
+	//	// æœç´¢åˆ°æ€æ£‹åˆ™ç»ˆæ­¢æœç´¢
 	//	if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE) {
 	//		break;
 	//	}
@@ -295,19 +287,19 @@ void SearchMain(int dep)
 	int nCurrTimer, nLimitTimer;
 	int nBookMoves;
 	BookStruct bks[MAX_GEN_MVS];
-	// Ö÷ËÑË÷Àı³Ì°üÀ¨ÒÔÏÂ¼¸¸ö²½Öè£º
+	// ä¸»æœç´¢ä¾‹ç¨‹åŒ…æ‹¬ä»¥ä¸‹å‡ ä¸ªæ­¥éª¤ï¼š
 
 
-// 2. ´Ó¿ª¾Ö¿âÖĞËÑË÷×Å·¨
+// 2. ä»å¼€å±€åº“ä¸­æœç´¢ç€æ³•
 	if (searchInfo.bUseBook) {
-		// a. »ñÈ¡¿ª¾Ö¿âÖĞµÄËùÓĞ×ß·¨
+		// a. è·å–å¼€å±€åº“ä¸­çš„æ‰€æœ‰èµ°æ³•
 		nBookMoves = GetBookMoves(searchInfo.board, bks);
 		if (nBookMoves > 0) {
 			vl = 0;
 			for (i = 0; i < nBookMoves; i++) {
 				vl += bks[i].wvl;
 			}
-			// b. ¸ù¾İÈ¨ÖØËæ»úÑ¡ÔñÒ»¸ö×ß·¨
+			// b. æ ¹æ®æƒé‡éšæœºé€‰æ‹©ä¸€ä¸ªèµ°æ³•
 			vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
 			for (i = 0; i < nBookMoves; i++) {
 				vl -= bks[i].wvl;
@@ -315,13 +307,13 @@ void SearchMain(int dep)
 					break;
 				}
 			}
-			// c. Èç¹û¿ª¾Ö¿âÖĞµÄ×Å·¨¹¹³ÉÑ­»·¾ÖÃæ£¬ÄÇÃ´²»×ßÕâ¸ö×Å·¨
+			// c. å¦‚æœå¼€å±€åº“ä¸­çš„ç€æ³•æ„æˆå¾ªç¯å±€é¢ï¼Œé‚£ä¹ˆä¸èµ°è¿™ä¸ªç€æ³•
 			searchInfo.board.makeMove(bks[i].wmv);
 			if (searchInfo.board.RepStatus(3) == 0) {
 				searchInfo.mvResult = bks[i].wmv;
 				searchInfo.board.undoMakeMove();
 				char result[4];
-				MOVE_COORD(searchInfo.mvResult, result);//½«½á¹û×ª»¯Îª¿ÉÊä³ö×Ö·û´® int->char*
+				MOVE_COORD(searchInfo.mvResult, result);//å°†ç»“æœè½¬åŒ–ä¸ºå¯è¾“å‡ºå­—ç¬¦ä¸² int->char*
 				printf("bestmove %.4s\n", (const char*)&result);
 				fflush(stdout);
 				if (searchInfo.bDebug)
@@ -332,7 +324,7 @@ void SearchMain(int dep)
 		}
 	}
 
-	// 3. Èç¹ûÉî¶ÈÎªÁãÔò·µ»Ø¾²Ì¬ËÑË÷Öµ
+	// 3. å¦‚æœæ·±åº¦ä¸ºé›¶åˆ™è¿”å›é™æ€æœç´¢å€¼
 	if (dep == 0) {
 		vl = Quies(searchInfo.board, -MATE_VALUE, MATE_VALUE);
 		//		vl = Evaluate(searchInfo.board);
@@ -343,62 +335,62 @@ void SearchMain(int dep)
 		return;
 	}
 
-	// 4. ³õÊ¼»¯Ê±¼äºÍ¼ÆÊıÆ÷
+	// 4. åˆå§‹åŒ–æ—¶é—´å’Œè®¡æ•°å™¨
 	searchInfo.bStop = false;
 	searchInfo.nUnchanged = 0;
 	searchInfo.mvResult = 0;
 	searchInfo.ClearKiller(searchInfo.wmvKiller);
 	searchInfo.ClearHistory();
 	memset(HashTable, 0, sizeof(HashTable));
-	// ÓÉÓÚ ClearHash() ĞèÒªÏûºÄÒ»¶¨Ê±¼ä£¬ËùÒÔ¼ÆÊ±´ÓÕâÒÔºó¿ªÊ¼±È½ÏºÏÀí
+	// ç”±äº ClearHash() éœ€è¦æ¶ˆè€—ä¸€å®šæ—¶é—´ï¼Œæ‰€ä»¥è®¡æ—¶ä»è¿™ä»¥åå¼€å§‹æ¯”è¾ƒåˆç†
 	searchInfo.llTime = GetTime();
 	vlLast = 0;
 	nCurrTimer = 0;
 
-	// 5. ×öµü´ú¼ÓÉîËÑË÷
+	// 5. åšè¿­ä»£åŠ æ·±æœç´¢
 	for (i = 1; i <= dep; i++)
 	{
-		// 6. ËÑË÷¸ù½áµã
+		// 6. æœç´¢æ ¹ç»“ç‚¹
 		vl = SearchRoot(i);
 		if (searchInfo.bStop) {
 			if (vl > -MATE_VALUE) {
-				vlLast = vl; // Ìø³öºó£¬vlLast»áÓÃÀ´ÅĞ¶ÏÈÏÊä»òÍ¶½µ£¬ËùÒÔĞèÒª¸ø¶¨×î½üÒ»¸öÖµ
+				vlLast = vl; // è·³å‡ºåï¼ŒvlLastä¼šç”¨æ¥åˆ¤æ–­è®¤è¾“æˆ–æŠ•é™ï¼Œæ‰€ä»¥éœ€è¦ç»™å®šæœ€è¿‘ä¸€ä¸ªå€¼
 			}
-			break; // Ã»ÓĞÌø³ö£¬Ôò"vl"ÊÇ¿É¿¿Öµ
+			break; // æ²¡æœ‰è·³å‡ºï¼Œåˆ™"vl"æ˜¯å¯é å€¼
 		}
 		if (searchInfo.bDebug) {
 			printf("info depth %d mv %d score %d\n", i, searchInfo.mvResult, vl);
 			fflush(stdout);
 		}
 		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-		// 7. Èç¹ûËÑË÷Ê±¼ä³¬¹ıÊÊµ±Ê±ÏŞ£¬ÔòÖÕÖ¹ËÑË÷
+		// 7. å¦‚æœæœç´¢æ—¶é—´è¶…è¿‡é€‚å½“æ—¶é™ï¼Œåˆ™ç»ˆæ­¢æœç´¢
 		nLimitTimer = searchInfo.nMaxTimer;
-		// a. Èç¹ûµ±Ç°ËÑË÷ÖµÃ»ÓĞÂäºóÇ°Ò»²ãºÜ¶à£¬ÄÇÃ´ÊÊµ±Ê±ÏŞ¼õ°ë
+		// a. å¦‚æœå½“å‰æœç´¢å€¼æ²¡æœ‰è½åå‰ä¸€å±‚å¾ˆå¤šï¼Œé‚£ä¹ˆé€‚å½“æ—¶é™å‡åŠ
 		nLimitTimer = (vl + DROPDOWN_VALUE >= vlLast ? nLimitTimer / 2 : nLimitTimer);
-		// b. Èç¹û×î¼Ñ×Å·¨Á¬Ğø¶à²ãÃ»ÓĞ±ä»¯£¬ÄÇÃ´ÊÊµ±Ê±ÏŞ¼õ°ë
+		// b. å¦‚æœæœ€ä½³ç€æ³•è¿ç»­å¤šå±‚æ²¡æœ‰å˜åŒ–ï¼Œé‚£ä¹ˆé€‚å½“æ—¶é™å‡åŠ
 		nLimitTimer = (searchInfo.nUnchanged >= UNCHANGED_DEPTH ? nLimitTimer / 2 : nLimitTimer);
 		if (nCurrTimer > nLimitTimer) {
 			vlLast = vl;
-			break; // ²»¹ÜÊÇ·ñÌø³ö£¬"vlLast"¶¼ÒÑ¸üĞÂ
+			break; // ä¸ç®¡æ˜¯å¦è·³å‡ºï¼Œ"vlLast"éƒ½å·²æ›´æ–°
 		}
 
 		vlLast = vl;
 
-		// 8. ËÑË÷µ½É±ÆåÔòÖÕÖ¹ËÑË÷
+		// 8. æœç´¢åˆ°æ€æ£‹åˆ™ç»ˆæ­¢æœç´¢
 		if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE)
 		{
 			break;
 		}
 
 	}
-	//Íê³Éµü´ú¼ÓÉîËÑË÷£¬»ñµÃ½á¹û
+	//å®Œæˆè¿­ä»£åŠ æ·±æœç´¢ï¼Œè·å¾—ç»“æœ
 	//searchInfo.board.drawBoard();
 	/*printf("SSSSSSSSSSSSSSSSSSS:after\n");
 	fflush(stdout);
 	searchInfo.board.drawBoard();*/
 	searchInfo.board.makeMove(searchInfo.mvResult);
 	char result[4];
-	MOVE_COORD(searchInfo.mvResult, result);//½«½á¹û×ª»¯Îª¿ÉÊä³ö×Ö·û´® int->char*
+	MOVE_COORD(searchInfo.mvResult, result);//å°†ç»“æœè½¬åŒ–ä¸ºå¯è¾“å‡ºå­—ç¬¦ä¸² int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
 	//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
 	fflush(stdout);
