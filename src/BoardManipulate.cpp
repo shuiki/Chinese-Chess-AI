@@ -385,6 +385,21 @@ bool Board::isLegalMove(int_16 mv)//判断一步棋是否合法
 
 }
 
+void Board::mirror(Board& mirror) const {
+	int sq, pc;
+	mirror.clearBoard();
+	for (sq = 0; sq < 256; sq++) {
+		pc = chessBoard[sq];
+		if (pc != 0) {
+			mirror.addPiece(MIRROR_SQUARE(sq), pc);
+		}
+	}
+	if (player == BLACK) {
+		mirror.changeSide();
+	}
+	mirror.clearMoves();
+}
+
 bool Board::isChecked(Player player)//判断某玩家是否被将军
 {
 	Player side = player;

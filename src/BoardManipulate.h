@@ -210,6 +210,7 @@ public:
 	int genMoves(int_16* mvs, bool captureOnly = false);//生成走法，返回走法数
 	void clearBoard();
 	void clearMoves();
+	void mirror(Board& mirror) const;
 	//void drawBoard();
 	int RepStatus(int limit)const;
 	bool lastCheck()
@@ -360,6 +361,25 @@ inline bool sameX(int_8 src, int_8 dst)
 inline bool sameY(int_8 src, int_8 dst)
 {
 	return getY(src) == getY(dst);
+}
+
+// 翻转格子
+inline int SQUARE_FLIP(int sq) {
+	return 254 - sq;
+}
+
+// 纵坐标水平镜像
+inline int FILE_FLIP(int x) {
+	return 14 - x;
+}
+
+// 横坐标垂直镜像
+inline int RANK_FLIP(int y) {
+	return 15 - y;
+}
+
+inline int MIRROR_SQUARE(int sq) {
+	return coordXY(FILE_FLIP(FILE_X(sq)), RANK_Y(sq));
 }
 
 inline int_8 charToChessType(char c)

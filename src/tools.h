@@ -115,4 +115,6 @@ inline int SIMPLE_VALUE(int pc) {
 inline uint32_t BIT_PIECE(int pc) {
   return 1 << (pc - 16);
 }
+
+
 #endif
