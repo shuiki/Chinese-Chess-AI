@@ -49,7 +49,7 @@ CommEnum BootLine(void)
 }
 
 //"IdleLine()"是最复杂的UCCI指令解释器，大多数的UCCI指令都由它来解释
-CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
+CommEnum IdleLine(UCCIComm& UcciComm)
 {
 	//如果bDebug指令为1，输出当前读到的指令
 	char Line_Str[INPUT_MAX];
@@ -59,10 +59,6 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 		Idle();
 	}
 	lp = Line_Str;
-	if (bDebug) {
-		printf("info idleline [%s]\n", lp);
-		fflush(stdout);
-	}
 	// 1. "isready"指令
 	if (strcmp(lp, "isready") == 0) {
 		return Comm_isready;
@@ -149,24 +145,20 @@ CommEnum IdleLine(UCCIComm& UcciComm, int bDebug)
 }
 
 //第三个解释器只用在引擎思考时，没有输入时直接返回"Comm_none"
-CommEnum BusyLine(UCCIComm& UcciComm, int bDebug)
+CommEnum BusyLine(UCCIComm& UcciComm)
 {
 	char Line_Str[INPUT_MAX];
 	char* lp;
 	if (std::cin.getline(Line_Str, INPUT_MAX)) {
-		if (bDebug) {
-			printf("info busyline [%s]\n", Line_Str);
-			fflush(stdout);
-			// "BusyLine"只能接收"isready"、"quit"这两条指令
-			if (strcmp(Line_Str, "isready") == 0) {
-				return Comm_isready;
-			}
-			else if (strcmp(Line_Str, "quit") == 0) {
-				return Comm_quit;
-			}
-			else
-				return Comm_none;
+	// "BusyLine"只能接收"isready"、"quit"这两条指令
+		if (strcmp(Line_Str, "isready") == 0) {
+			return Comm_isready;
 		}
+		else if (strcmp(Line_Str, "quit") == 0) {
+			return Comm_quit;
+		}
+		else
+			return Comm_none;		
 	}
 	else
 		return Comm_none;
