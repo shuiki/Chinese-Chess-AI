@@ -425,7 +425,6 @@ void Board::PreEvaluate(void) {
     this->valueRed = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nBlackAttacks) / TOTAL_ATTACK_VALUE;
     this->valueBlack = ADVISOR_BISHOP_ATTACKLESS_VALUE * (TOTAL_ATTACK_VALUE - nWhiteAttacks) / TOTAL_ATTACK_VALUE;
     
-    PreEval.valueAdvanced = 3;
     // 子力位置分
     for (int i = 16; i < 32; i++)
     {
