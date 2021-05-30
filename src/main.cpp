@@ -22,7 +22,7 @@ int main() {
 	searchInfo.bUseHash = true;
 	searchInfo.bUseBook = true;
 	while (!searchInfo.bQuit) {
-		switch (IdleLine(UcciComm, searchInfo.bDebug)) {
+		switch (IdleLine(UcciComm)) {
 		case Comm_isready:
 			printf("%s\n", "readyok");
 			fflush(stdout);
