@@ -8,7 +8,7 @@ HashStruct HashTable[HASH_SIZE];
 const bool NO_NULL = false; // "SearchPV()"的参数，是否禁止空着裁剪
 using namespace std;
 
-
+int max_depth,pv_num,quies_num;
 // 后剪枝，剪去重复局面和较差局面
 int prune(const Board& pos) {
 	//查找
@@ -39,6 +39,7 @@ inline bool Compare_MVV(int value_1, int value_2){
 // 静态搜索
 int Quies(Board& pos, int Alpha, int Beta) {
 
+	quies_num++;
 	// 达到极限深度，直接返回；
 	if (pos.distance == LIMIT_DEPTH) 
 		return  pos.Evaluate();
@@ -101,6 +102,7 @@ beta:本层节点最小值 alpha:上一层节点值
 **********************/
 static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
+	pv_num++;
 	int vl, vlBest, nHashFlag;
 	int nNewDepth, nCurrTimer;
 	uint16_t mvBest, mvHash, mv;
@@ -136,6 +138,14 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			return vl;
 		}
 	}
+	if (searchInfo.bDebug)
+	{
+		char result[4];
+		MOVE_COORD(searchInfo.nHistoryTable[searchInfo.board.distance], result);//将结果转化为可输出字符串 int->char*
+		printf("*PVmax_depth: %d depth: %d move %.4s\n", max_depth, depth, (const char*)&result);
+		//printf("%d\n",searchInfo.mvResult);
+		fflush(stdout);
+	}
 	// 6. 初始化；
 	mvBest = 0;
 	nHashFlag = HASH_ALPHA;
@@ -144,6 +154,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	while ((mv = MoveSort.Next()) != 0) {/////////////////////第二层genMove后面大量重复的同一步，看看怎么回事
 		if (searchInfo.board.makeMove(mv))
 		{
+			
 			/*
 			//若被将军则不尝试
 			if (searchInfo.board.isChecked(searchInfo.board.player))
@@ -155,12 +166,12 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			//int value = -SearchPV(depth - 1, -beta, -alpha);
 			nNewDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(-beta, -alpha, nNewDepth);/////////////////repstatus那儿有问题，老是返回-20平局！
+				vl = -SearchPV(nNewDepth ,-beta, -alpha);/////////////////repstatus那儿有问题，老是返回-20平局！
 			}
 			else {
-				vl = -SearchPV(-alpha - 1, -alpha, nNewDepth);
+				vl = -SearchPV(nNewDepth ,-alpha - 1, -alpha);
 				if (vl > alpha&& vl < beta) {
-					vl = -SearchPV(-beta, -alpha, nNewDepth);
+					vl = -SearchPV(nNewDepth ,-beta, -alpha);
 				}
 			}
 			searchInfo.board.undoMakeMove();
@@ -214,6 +225,14 @@ int SearchRoot(int depth) {
 	while ((mv = mvs.Next()) != 0) {
 		if (searchInfo.board.makeMove(mv))
 		{
+			if (searchInfo.bDebug)
+			{
+				char result[4];
+				MOVE_COORD(mv, result);//将结果转化为可输出字符串 int->char*
+				printf("ROOT max_depth: %d depth: %d move %.4s\n", max_depth, max_depth - depth, (const char*)&result);
+				//printf("%d\n",searchInfo.mvResult);
+				fflush(stdout);
+			}
 			/*
 			//若被将军则不尝试
 			if (searchInfo.board.isChecked(searchInfo.board.player))
@@ -247,16 +266,12 @@ int SearchRoot(int depth) {
 				searchInfo.mvResult = mv;
 			}
 
-			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-			if (nCurrTimer > searchInfo.nMaxTimer) {
-				searchInfo.bStop = true;
-			}
 		}
-		else {
-			nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-			if (nCurrTimer > searchInfo.nMaxTimer) {
-				searchInfo.bStop = true;
-			}
+		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+		if (nCurrTimer > searchInfo.nMaxTimer) {
+			searchInfo.bStop = true;
+			if (searchInfo.bDebug)
+				cout << "Time Out search depth = " << max_depth<<endl;
 		}
 	}
 	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
@@ -349,6 +364,8 @@ void SearchMain(int dep)
 	// 5. 做迭代加深搜索
 	for (i = 1; i <= dep; i++)
 	{
+		max_depth = i;
+		pv_num = quies_num = 0;
 		// 6. 搜索根结点
 		vl = SearchRoot(i);
 		if (searchInfo.bStop) {
@@ -391,7 +408,9 @@ void SearchMain(int dep)
 	char result[4];
 	MOVE_COORD(searchInfo.mvResult, result);//将结果转化为可输出字符串 int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
-	//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
+	if(searchInfo.bDebug)
+		cout << "PV_NUM= "<< pv_num <<", QUIES_NUM= " <<quies_num<<endl;
+		//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
 	fflush(stdout);
 	if (searchInfo.bDebug)
 		searchInfo.board.drawBoard();
