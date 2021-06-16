@@ -1,5 +1,4 @@
 #include"search.h"
-#include"search.h"
 #include "book.h"
 
 MoveSortStruct mvs;
@@ -37,18 +36,23 @@ inline bool Compare_MVV(int value_1, int value_2){
 }
 
 // 静态搜索
-int Quies(Board& pos, int Alpha, int Beta) {
+int Quies(Board& board, int Alpha, int Beta) {
 
 	quies_num++;
 	// 达到极限深度，直接返回；
-	if (pos.distance == LIMIT_DEPTH) 
-		return  pos.Evaluate();
-
+	if (board.distance == LIMIT_DEPTH) 
+		return  board.Evaluate();
+	//时间判断，时间到了则返回
+	int CurTime = (int)(GetTime() - searchInfo.llTime);
+	if (CurTime > searchInfo.nMaxTimer) {
+		searchInfo.bStop = true;
+		board.Evaluate();
+	}
 	int val, Move_num = 0, val_best = -MATE_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
 
 	// 重复裁剪；有重复局面直接返回估值
-	val = prune(pos);
+	val = prune(board);
 	if (val > -MATE_VALUE) {
 		return val;
 	}
@@ -57,40 +61,40 @@ int Quies(Board& pos, int Alpha, int Beta) {
 	//无重复局面：
 
 	// 被将军局面:
-	if (pos.lastCheck()) {
-		Move_num = pos.gemove_num(mvs);
+	if (board.lastCheck()) {
+		Move_num = board.gemove_num(mvs);
 		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
 	// 未被将军局面:
 	else {
-		val = pos.Evaluate();
+		val = board.Evaluate();
 		if (val >= Beta) 
 			return val;
 		val_best = val;
 		if (val > Alpha) 
 			Alpha = val;
-		Move_num = pos.gemove_num(mvs, true);
+		Move_num = board.gemove_num(mvs, true);
 		std::sort(mvs, mvs + Move_num, Compare_MVV);
 	}
 	// 对生成着法A-B搜索
 	for (int i = 0; i < Move_num; i++) {
-		if (pos.makeMove(mvs[i])){	
-			val = -Quies(pos, -Beta, -Alpha);
+		if (board.makeMove(mvs[i])){	
+			val = -Quies(board, -Beta, -Alpha);
 			if (val > val_best) {
 				if (val >= Beta)
 				{
-					pos.undoMakeMove();
+					board.undoMakeMove();
 					return val;
 				}
 				val_best = val;
 				if (val > Alpha)
 					Alpha = val;
 			}
-			pos.undoMakeMove();
+			board.undoMakeMove();
 		}
 	}
 
-	return (val_best == -MATE_VALUE) ? pos.distance - MATE_VALUE : val_best;
+	return (val_best == -MATE_VALUE) ? board.distance - MATE_VALUE : val_best;
 }
 
 /*******************
@@ -104,7 +108,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
 	pv_num++;
 	int vl, vlBest, nHashFlag;
-	int nNewDepth, nCurrTimer;
+	int newDepth, CurTime;
 	uint16_t mvBest, mvHash, mv;
 	MoveSortStruct MoveSort;
 	// 1. 在叶子结点处调用静态搜索；
@@ -113,7 +117,12 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		return Quies(searchInfo.board, alpha, beta);
 	//return Evaluate(searchInfo.board);
 
-// 2. 重复裁剪；
+		// 4. 达到极限深度，直接返回评价值；
+	if (searchInfo.board.distance == LIMIT_DEPTH) {
+		return searchInfo.board.Evaluate();
+	}
+
+	// 2. 重复裁剪；
 	vl = prune(searchInfo.board);
 	if (vl > -MATE_VALUE) {//-MATE_VALUE是重复的特定返回值
 		return vl;
@@ -124,10 +133,8 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		// 由于PV结点不适用置换裁剪，所以不会发生PV路线中断的情况
 		return vl;
 	}
-	// 4. 达到极限深度，直接返回评价值；
-	if (searchInfo.board.distance == LIMIT_DEPTH) {
-		return searchInfo.board.Evaluate();
-	}
+	
+
 	// 5. 尝试空着裁剪；
 	if (bNoNull && !searchInfo.board.lastCheck()) { //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
 		searchInfo.board.nullMove();
@@ -138,7 +145,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			return vl;
 		}
 	}
-	if (searchInfo.bDebug)
+	if (0&&searchInfo.bDebug)
 	{
 		char result[4];
 		MOVE_COORD(searchInfo.nHistoryTable[searchInfo.board.distance], result);//将结果转化为可输出字符串 int->char*
@@ -152,6 +159,11 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
 	while ((mv = MoveSort.Next()) != 0) {/////////////////////第二层genMove后面大量重复的同一步，看看怎么回事
+		CurTime = (int)(GetTime() - searchInfo.llTime);
+		if (CurTime > searchInfo.nMaxTimer) {
+			searchInfo.bStop = true;
+			return mvBest;
+		}
 		if (searchInfo.board.makeMove(mv))
 		{
 			
@@ -164,19 +176,18 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			}
 			*/
 			//int value = -SearchPV(depth - 1, -beta, -alpha);
-			nNewDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
+			newDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(nNewDepth ,-beta, -alpha);/////////////////repstatus那儿有问题，老是返回-20平局！
+				vl = -SearchPV(newDepth ,-beta, -alpha);/////////////////repstatus那儿有问题，老是返回-20平局！
 			}
 			else {
-				vl = -SearchPV(nNewDepth ,-alpha - 1, -alpha);
+				vl = -SearchPV(newDepth ,-alpha - 1, -alpha);
 				if (vl > alpha&& vl < beta) {
-					vl = -SearchPV(nNewDepth ,-beta, -alpha);
+					vl = -SearchPV(newDepth ,-beta, -alpha);
 				}
 			}
 			searchInfo.board.undoMakeMove();
-			if (searchInfo.bStop)
-				return mvBest;
+				
 			if (vl > vlBest)
 			{
 				vlBest = vl;
@@ -195,10 +206,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			}
 		}
 
-		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-		if (nCurrTimer > searchInfo.nMaxTimer) {
-			searchInfo.bStop = true;
-		}
+		
 	}
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
@@ -216,7 +224,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	return alpha;
 }
 int SearchRoot(int depth) {
-	int nNewDepth, vlBest, vl, mv, nCurrTimer;
+	int newDepth, vlBest, vl, mv, CurTime;
 	// 根结点搜索例程包括以下几个步骤：
 	// 1. 初始化
 	vlBest = -MATE_VALUE;
@@ -242,15 +250,15 @@ int SearchRoot(int depth) {
 			}
 			*/
 			// 3. 尝试选择性延伸(只考虑将军延伸)
-			nNewDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
+			newDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
 			// 4. 主要变例搜索
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(nNewDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
+				vl = -SearchPV(newDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
 			}
 			else {
-				vl = -SearchPV(nNewDepth, -vlBest - 1, -vlBest);
+				vl = -SearchPV(newDepth, -vlBest - 1, -vlBest);
 				if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
-					vl = -SearchPV(nNewDepth, -MATE_VALUE, -vlBest, NO_NULL);
+					vl = -SearchPV(newDepth, -MATE_VALUE, -vlBest, NO_NULL);
 				}
 			}
 			searchInfo.board.undoMakeMove();
@@ -267,8 +275,8 @@ int SearchRoot(int depth) {
 			}
 
 		}
-		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
-		if (nCurrTimer > searchInfo.nMaxTimer) {
+		CurTime = (int)(GetTime() - searchInfo.llTime);
+		if (CurTime > searchInfo.nMaxTimer) {
 			searchInfo.bStop = true;
 			if (searchInfo.bDebug)
 				cout << "Time Out search depth = " << max_depth<<endl;
@@ -298,7 +306,7 @@ void SearchMain(int dep)
 	//	}
 	//}
 	int i, vl, vlLast;
-	int nCurrTimer, nLimitTimer;
+	int CurTime, nLimitTimer;
 	int nBookMoves;
 	BookStruct bks[MAX_GEN_MVS];
 	// 主搜索例程包括以下几个步骤：
@@ -359,7 +367,7 @@ void SearchMain(int dep)
 	// 由于 ClearHash() 需要消耗一定时间，所以计时从这以后开始比较合理
 	searchInfo.llTime = GetTime();
 	vlLast = 0;
-	nCurrTimer = 0;
+	CurTime = 0;
 
 	// 5. 做迭代加深搜索
 	for (i = 1; i <= dep; i++)
@@ -378,14 +386,14 @@ void SearchMain(int dep)
 			printf("info depth %d mv %d score %d\n", i, searchInfo.mvResult, vl);
 			fflush(stdout);
 		}
-		nCurrTimer = (int)(GetTime() - searchInfo.llTime);
+		CurTime = (int)(GetTime() - searchInfo.llTime);
 		// 7. 如果搜索时间超过适当时限，则终止搜索
 		nLimitTimer = searchInfo.nMaxTimer;
 		// a. 如果当前搜索值没有落后前一层很多，那么适当时限减半
 		nLimitTimer = (vl + DROPDOWN_VALUE >= vlLast ? nLimitTimer / 2 : nLimitTimer);
 		// b. 如果最佳着法连续多层没有变化，那么适当时限减半
 		nLimitTimer = (searchInfo.nUnchanged >= UNCHANGED_DEPTH ? nLimitTimer / 2 : nLimitTimer);
-		if (nCurrTimer > nLimitTimer) {
+		if (CurTime > nLimitTimer) {
 			vlLast = vl;
 			break; // 不管是否跳出，"vlLast"都已更新
 		}
@@ -404,6 +412,11 @@ void SearchMain(int dep)
 	/*printf("SSSSSSSSSSSSSSSSSSS:after\n");
 	fflush(stdout);
 	searchInfo.board.drawBoard();*/
+	if (0&&searchInfo.bDebug)
+	{
+		cout << "beforemove" << endl;
+		searchInfo.board.drawBoard();
+	}
 	searchInfo.board.makeMove(searchInfo.mvResult);
 	char result[4];
 	MOVE_COORD(searchInfo.mvResult, result);//将结果转化为可输出字符串 int->char*
@@ -412,8 +425,11 @@ void SearchMain(int dep)
 		cout << "PV_NUM= "<< pv_num <<", QUIES_NUM= " <<quies_num<<endl;
 		//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
 	fflush(stdout);
-	if (searchInfo.bDebug)
+	if (0&&searchInfo.bDebug)
+	{
+		cout << "aftermove" << endl;
 		searchInfo.board.drawBoard();
+	}
 }
 
 /*
