@@ -4,11 +4,11 @@
 MoveSortStruct mvs;
 SearchInfo searchInfo;
 HashStruct HashTable[HASH_SIZE];
-const bool NO_NULL = false; // "SearchPV()"的参数，是否禁止空着裁剪
+const bool NO_NULL = false; // 禁止空着
 using namespace std;
 
 int max_depth, pv_num, quies_num;
-// 后剪枝，剪去重复局面和较差局面
+
 int prune(const Board& pos) {
 	//查找
 	int vlRep = pos.RepStatus(1);
@@ -36,15 +36,15 @@ inline bool Compare_MVV(int value_1, int value_2) {
 }
 void checkTime() {
 	int64_t CurTime=0;
-	CurTime = (GetTime() - searchInfo.llTime);
+	CurTime = (GetTime() - searchInfo.Timer);
 	//if(searchInfo.bDebug)
-	//cout<< searchInfo.nMaxTimer << endl;
-	if (CurTime > searchInfo.nMaxTimer*1000)
+	//cout<< searchInfo.TimeMax << endl;
+	if (CurTime > searchInfo.TimeMax*1000)
 		searchInfo.bStop = true;
 	
 	//printf("%d ", CurTime);
 	//cout << searchInfo.bStop<<' ';
-	//cout << CurTime << ' '<<searchInfo.nMaxTimer<<endl;
+	//cout << CurTime << ' '<<searchInfo.TimeMax<<endl;
 }
 // 静态搜索
 int Quies(Board& board, int Alpha, int Beta) {
@@ -67,14 +67,12 @@ int Quies(Board& board, int Alpha, int Beta) {
 	}
 	if (val > Alpha)
 		Alpha = val;
-	//无重复局面：
 
-	// 被将军局面:
+	// 被将军
 	if (board.lastCheck()) {
 		Move_num = board.gemove_num(mvs);
 		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
-	// 未被将军局面:
 	else {
 		val = board.Evaluate();
 		if (val >= Beta)
@@ -85,7 +83,7 @@ int Quies(Board& board, int Alpha, int Beta) {
 		Move_num = board.gemove_num(mvs, true);
 		std::sort(mvs, mvs + Move_num, Compare_MVV);
 	}
-	// 对生成着法A-B搜索
+	// alpha-beta
 	for (int i = 0; i < Move_num; i++) {
 		if (board.makeMove(mvs[i])) {
 			val = -Quies(board, -Beta, -Alpha);
@@ -126,25 +124,24 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		return Quies(searchInfo.board, alpha, beta);
 	//return Evaluate(searchInfo.board);
 
-		// 4. 达到极限深度，直接返回评价值；
+		//超过数组大小
 	if (searchInfo.board.distance == LIMIT_DEPTH) {
 		return searchInfo.board.Evaluate();
 	}
 
-	// 2. 重复裁剪；
+	// 去重
 	vl = prune(searchInfo.board);
 	if (vl > -MATE_VALUE) {//-MATE_VALUE是重复的特定返回值
 		return vl;
 	}
-	// 3. 置换裁剪；如果该搜索节点在置换表中出现
+	// 哈希置换表查找
 	vl = probeHash(searchInfo.board, depth, alpha, beta, mvHash);
 	if (searchInfo.bUseHash && vl > -MATE_VALUE) {
-		// 由于PV结点不适用置换裁剪，所以不会发生PV路线中断的情况
 		return vl;
 	}
 
 
-	// 5. 尝试空着裁剪；
+	// 空着；
 	if (bNoNull && !searchInfo.board.lastCheck()) { //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
 		searchInfo.board.nullMove();
 		vl = -SearchPV(depth - NULL_DEPTH - 1, -beta, 1 - beta, NO_NULL);
@@ -162,7 +159,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		//printf("%d\n",searchInfo.mvResult);
 		fflush(stdout);
 	}
-	// 6. 初始化；
+	// 初始化；
 	mvBest = 0;
 	nHashFlag = HASH_ALPHA;
 	vlBest = -MATE_VALUE;
@@ -175,15 +172,6 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		if (searchInfo.board.makeMove(mv))
 		{
 
-			/*
-			//若被将军则不尝试
-			if (searchInfo.board.isChecked(searchInfo.board.player))
-			{
-				searchInfo.board.undoMakeMove();
-				continue;
-			}
-			*/
-			//int value = -SearchPV(depth - 1, -beta, -alpha);
 			newDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
 			if (vlBest == -MATE_VALUE) {
 				vl = -SearchPV(newDepth, -beta, -alpha);/////////////////repstatus那儿有问题，老是返回-20平局！
@@ -218,7 +206,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	}
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
-	// 11. 更新置换表、历史表和杀手着法表。
+	// 更新board
 	if (vlBest == -MATE_VALUE) {////////////////////////最后返回的杀棋来自这儿，一直没更新过vlBest
 		return searchInfo.board.distance - MATE_VALUE;
 	}
@@ -234,10 +222,10 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 int SearchRoot(int depth) {
 	int newDepth, vlBest, vl, mv;
 	// 根结点搜索例程包括以下几个步骤：
-	// 1. 初始化
+	// 初始化
 	vlBest = -MATE_VALUE;
 	mvs.Init(searchInfo.mvResult);
-	// 2. 逐一搜索每个着法
+	// 搜索
 	while ((mv = mvs.Next()) != 0) {
 		checkTime();
 		if (searchInfo.bStop == true) {
@@ -255,17 +243,10 @@ int SearchRoot(int depth) {
 				//printf("%d\n",searchInfo.mvResult);
 				fflush(stdout);
 			}
-			/*
-			//若被将军则不尝试
-			if (searchInfo.board.isChecked(searchInfo.board.player))
-			{
-				searchInfo.board.undoMakeMove();
-				continue;
-			}
-			*/
-			// 3. 尝试选择性延伸(只考虑将军延伸)
+			
+			// 选择延伸
 			newDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
-			// 4. 主要变例搜索
+
 			if (vlBest == -MATE_VALUE) {
 				vl = -SearchPV(newDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
 			}
@@ -276,17 +257,15 @@ int SearchRoot(int depth) {
 				}
 			}
 			searchInfo.board.undoMakeMove();
-			// 5. Alpha-Beta边界判定("vlBest"代替了"SearchPV()"中的"vlAlpha")
+
 			if (vl > vlBest) {
 
 				vlBest = vl;
-				// 7. 搜索到最佳着法时记录主要变例
 				searchInfo.mvResult = mv;
 			}
 
 		}
-		// 6. 如果搜索到第一着法，那么"未改变最佳着法"的计数器加1，否则清零
-				//searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
+		
 	}
 	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
 	fflush(stdout);
@@ -297,28 +276,25 @@ int SearchRoot(int depth) {
 }
 /*SearchMain用到的初始化函数*/
 void Initial() {
-	// 初始化时间和计数器
+
 	searchInfo.bStop = false;
-	//searchInfo.nUnchanged = 0;
 	searchInfo.mvResult = 0;
 	searchInfo.ClearKiller(searchInfo.wmvKiller);
 	searchInfo.ClearHistory();
 	memset(HashTable, 0, sizeof(HashTable));
-	// 由于 ClearHash() 需要消耗一定时间，所以计时从这以后开始比较合理
-	searchInfo.llTime = GetTime();
+	//计时
+	searchInfo.Timer = GetTime();
 }
 /*SearchMain用到的开局库函数，返回是否找到着法*/
 int TryBookMv() {
 	int i, vl, mvs;
 	BookStruct bks[MAX_GEN_MVS];
-	// a. 获取开局库中的所有走法
 	mvs = GetBookMoves(searchInfo.board, bks);
 	if (mvs > 0) {
 		vl = 0;
 		for (i = 0; i < mvs; i++) {
 			vl += bks[i].wvl;
 		}
-		// b. 根据权重随机选择一个走法
 		vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
 		for (i = 0; i < mvs; i++) {
 			vl -= bks[i].wvl;
@@ -326,7 +302,7 @@ int TryBookMv() {
 				break;
 			}
 		}
-		// c. 如果开局库中的着法构成循环局面，那么不走这个着法
+		// 去循环
 		searchInfo.board.makeMove(bks[i].wmv);
 		if (searchInfo.board.RepStatus(3) == 0) {
 			searchInfo.mvResult = bks[i].wmv;
@@ -350,38 +326,27 @@ int TryBookMv() {
 ************************/
 void SearchMain(int dep)
 {
-	//searchInfo.ClearHistory();
-	//for (int i = 0; i < depth; i++)
-	//{
-	//	SearchRoot(i);
-
-	//	// 搜索到杀棋则终止搜索
-	//	if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE) {
-	//		break;
-	//	}
-	//}
 	int i, vl, vlLast;
 	int CurTime;
 
 	// 主搜索例程包括以下几个步骤：
 
-	// 2. 从开局库中搜索着法
-		if (searchInfo.bUseBook) {
-			if (TryBookMv())
-				return;
-		}
+	// 开局库
+	if (searchInfo.bUseBook) {
+		if (TryBookMv())
+			return;
+	}
 
-		// 4.初始化时间和计数器
+	// 初始化
 	Initial();
 	vlLast = 0;
 	CurTime = 0;
 
-	// 5. 做迭代加深搜索
+	// 做迭代加深搜索
 	for (i = 1; i <= dep; i++)
 	{
 		max_depth = i;
 		pv_num = quies_num = 0;
-		// 6. 搜索根结点
 		vl = SearchRoot(i);
 		if (searchInfo.bStop) {
 			if (vl > -MATE_VALUE) {
@@ -399,19 +364,6 @@ void SearchMain(int dep)
 			vlLast = vl;
 			break; // 不管是否跳出，"vlLast"都已更新
 		}
-#if 0
-		CurTime = (int)(GetTime() - searchInfo.llTime);
-		// 7. 如果搜索时间超过适当时限，则终止搜索
-		nLimitTimer = searchInfo.nMaxTimer;
-		// a. 如果当前搜索值没有落后前一层很多，那么适当时限减半
-		nLimitTimer = (vl + DROPDOWN_VALUE >= vlLast ? nLimitTimer / 2 : nLimitTimer);
-		// b. 如果最佳着法连续多层没有变化，那么适当时限减半
-		nLimitTimer = (searchInfo.nUnchanged >= UNCHANGED_DEPTH ? nLimitTimer / 2 : nLimitTimer);
-		if (CurTime > nLimitTimer) {
-			vlLast = vl;
-			break; // 不管是否跳出，"vlLast"都已更新
-		}
-#endif
 
 		vlLast = vl;
 

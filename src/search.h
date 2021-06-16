@@ -40,19 +40,16 @@ public:
 	//HashStruct HashTable[HASH_SIZE];	// 置换表HashTable[x]=搜索得到信息
 	int nHistoryTable[65536];			// 历史表
 	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
-
-	int64_t llTime;                     // 计时器
-	uint32_t mvResult;					// 走棋结果
-	bool bStop;				            // 中止信号
-	//int nUnchanged;                     // 未改变最佳着法的深度
+	int64_t Timer;                     // 计时器
+	uint32_t mvResult;					// 走法
+	bool bStop;				            // 停flag
 	int vlLast;
-	Board board;                // 待搜索的局面
-	int time;				//限制时间
-	bool bQuit;						   // 是否收到退出指令
-	bool bDebug;					   // 是否调试模式
-	bool bUseHash, bUseBook;           // 是否使用置换表裁剪和开局库
+	Board board;					// 局面
+	bool bQuit;						   // 退出flag
+	bool bDebug;					   // debug flag
+	bool bUseHash, bUseBook;           // 置换表和开局库
 	RC4 rc4Random;               // 随机数
-	int64_t nMaxTimer;					   // 最大使用时间
+	int64_t TimeMax;					   // 限制时间
 	char szBookFile[1024];             // 开局库
 	//bool CompareHistory(const int lpmv1, const int lpmv2);
 	void ClearHistory();
@@ -63,13 +60,7 @@ public:
 
 extern HashStruct HashTable[HASH_SIZE];
 extern SearchInfo searchInfo;
-//static struct {
-//	
-//	uint16_t wmvKiller[LIMIT_DEPTH][2]; // 杀手着法表
-//	HashStruct HashTable[HASH_SIZE];	// 置换表
-//	int nHistoryTable[65536];			// 历史表
-//	MoveSortStruct MoveSort;            // 根结点的着法序列
-//} Search2;
+
 class MoveSortStruct {
 public:
 	uint16_t mvs[MAX_GEN_MVS];           // 所有的走法
@@ -126,7 +117,6 @@ inline int MoveSortStruct::Next() {
 		if (mvKiller1 != mvHash && mvKiller1 != 0 && searchInfo.board.isLegalMove(mvKiller1)) {
 			return mvKiller1;
 		}
-		// 2. 杀手着法启发(第二个杀手着法)，完成后立即进入下一阶段；
 	case PHASE_KILLER_2:
 		state = AllSearchState;
 		if (mvKiller2 != mvHash && mvKiller2 != 0 && searchInfo.board.isLegalMove(mvKiller2)) {
