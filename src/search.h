@@ -44,7 +44,7 @@ public:
 	int64_t llTime;                     // 计时器
 	uint32_t mvResult;					// 走棋结果
 	bool bStop;				            // 中止信号
-	int nUnchanged;                     // 未改变最佳着法的深度
+	//int nUnchanged;                     // 未改变最佳着法的深度
 	int vlLast;
 	Board board;                // 待搜索的局面
 	int time;				//限制时间
@@ -52,7 +52,7 @@ public:
 	bool bDebug;					   // 是否调试模式
 	bool bUseHash, bUseBook;           // 是否使用置换表裁剪和开局库
 	RC4 rc4Random;               // 随机数
-	int nMaxTimer;					   // 最大使用时间
+	int64_t nMaxTimer;					   // 最大使用时间
 	char szBookFile[1024];             // 开局库
 	//bool CompareHistory(const int lpmv1, const int lpmv2);
 	void ClearHistory();
@@ -73,7 +73,6 @@ extern SearchInfo searchInfo;
 class MoveSortStruct {
 public:
 	uint16_t mvs[MAX_GEN_MVS];           // 所有的走法
-	int bestmv;	//计算出来的最好走法
 	State state;
 	int mvHash, mvKiller1, mvKiller2; // 置换表走法和两个杀手走法
 	int index;
@@ -148,5 +147,4 @@ inline int MoveSortStruct::Next() {
 	}
 
 }
-
 #endif

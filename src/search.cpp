@@ -4,81 +4,90 @@
 MoveSortStruct mvs;
 SearchInfo searchInfo;
 HashStruct HashTable[HASH_SIZE];
-const bool NO_NULL = false; // "SearchPV()"çš„å‚æ•°ï¼Œæ˜¯å¦ç¦æ­¢ç©ºç€è£å‰ª
+const bool NO_NULL = false; // "SearchPV()"µÄ²ÎÊı£¬ÊÇ·ñ½ûÖ¹¿Õ×Å²Ã¼ô
 using namespace std;
 
-int max_depth,pv_num,quies_num;
-// åå‰ªæï¼Œå‰ªå»é‡å¤å±€é¢å’Œè¾ƒå·®å±€é¢
+int max_depth, pv_num, quies_num;
+// ºó¼ôÖ¦£¬¼ôÈ¥ÖØ¸´¾ÖÃæºÍ½Ï²î¾ÖÃæ
 int prune(const Board& pos) {
-	//æŸ¥æ‰¾
+	//²éÕÒ
 	int vlRep = pos.RepStatus(1);
-	//å­˜åœ¨é‡å¤å±€é¢ï¼Œä¸åŒé‡å¤å±€é¢å¯¹åº”ä¸åŒä¼°å€¼
+	//´æÔÚÖØ¸´¾ÖÃæ£¬²»Í¬ÖØ¸´¾ÖÃæ¶ÔÓ¦²»Í¬¹ÀÖµ
 	if (vlRep > 0) {
 		return pos.RepValue(vlRep);
 	}
-	//ä¸å­˜åœ¨é‡å¤å±€é¢
+	//²»´æÔÚÖØ¸´¾ÖÃæ
 	return -MATE_VALUE;
 }
 
 
-// MVVæ¯ç§å­åŠ›ä»·å€¼ï¼š
+// MVVÃ¿ÖÖ×ÓÁ¦¼ÛÖµ£º
 static int MVV_value[24] = { 0, 0, 0, 0, 0, 0, 0, 0,5, 1, 1, 3, 4, 3, 2, 0,5, 1, 1, 3, 4, 3, 2, 0 };
 
-inline int value(int value){
+inline int value(int value) {
 	return (8 * MVV_value[searchInfo.board.chessBoard[getDST(value)]]) - MVV_value[searchInfo.board.chessBoard[getSRC(value)]];
 }
 
-inline bool Compare_MVV(int value_1, int value_2){
+inline bool Compare_MVV(int value_1, int value_2) {
 	if (value(value_1) > value(value_2))
 		return true;
 	else
 		return false;
 }
-
-// é™æ€æœç´¢
+void checkTime() {
+	int64_t CurTime=0;
+	CurTime = (GetTime() - searchInfo.llTime);
+	//if(searchInfo.bDebug)
+	//cout<< searchInfo.nMaxTimer << endl;
+	if (CurTime > searchInfo.nMaxTimer*1000)
+		searchInfo.bStop = true;
+	
+	//printf("%d ", CurTime);
+	//cout << searchInfo.bStop<<' ';
+	//cout << CurTime << ' '<<searchInfo.nMaxTimer<<endl;
+}
+// ¾²Ì¬ËÑË÷
 int Quies(Board& board, int Alpha, int Beta) {
 
 	quies_num++;
-	// è¾¾åˆ°æé™æ·±åº¦ï¼Œç›´æ¥è¿”å›ï¼›
-	if (board.distance == LIMIT_DEPTH) 
+	// ´ïµ½¼«ÏŞÉî¶È£¬Ö±½Ó·µ»Ø£»
+	if (board.distance == LIMIT_DEPTH)
 		return  board.Evaluate();
-	//æ—¶é—´åˆ¤æ–­ï¼Œæ—¶é—´åˆ°äº†åˆ™è¿”å›
-	int CurTime = (int)(GetTime() - searchInfo.llTime);
-	if (CurTime > searchInfo.nMaxTimer) {
-		searchInfo.bStop = true;
-		board.Evaluate();
-	}
+	//Ê±¼äÅĞ¶Ï£¬Ê±¼äµ½ÁËÔò·µ»Ø
+	checkTime();
+	if (searchInfo.bStop)
+		return board.Evaluate();
 	int val, Move_num = 0, val_best = -MATE_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
 
-	// é‡å¤è£å‰ªï¼›æœ‰é‡å¤å±€é¢ç›´æ¥è¿”å›ä¼°å€¼
+	// ÖØ¸´²Ã¼ô£»ÓĞÖØ¸´¾ÖÃæÖ±½Ó·µ»Ø¹ÀÖµ
 	val = prune(board);
 	if (val > -MATE_VALUE) {
 		return val;
 	}
 	if (val > Alpha)
 		Alpha = val;
-	//æ— é‡å¤å±€é¢ï¼š
+	//ÎŞÖØ¸´¾ÖÃæ£º
 
-	// è¢«å°†å†›å±€é¢:
+	// ±»½«¾ü¾ÖÃæ:
 	if (board.lastCheck()) {
 		Move_num = board.gemove_num(mvs);
 		std::sort(mvs, mvs + Move_num, CompareHistory);
 	}
-	// æœªè¢«å°†å†›å±€é¢:
+	// Î´±»½«¾ü¾ÖÃæ:
 	else {
 		val = board.Evaluate();
-		if (val >= Beta) 
+		if (val >= Beta)
 			return val;
 		val_best = val;
-		if (val > Alpha) 
+		if (val > Alpha)
 			Alpha = val;
 		Move_num = board.gemove_num(mvs, true);
 		std::sort(mvs, mvs + Move_num, Compare_MVV);
 	}
-	// å¯¹ç”Ÿæˆç€æ³•A-Bæœç´¢
+	// ¶ÔÉú³É×Å·¨A-BËÑË÷
 	for (int i = 0; i < Move_num; i++) {
-		if (board.makeMove(mvs[i])){	
+		if (board.makeMove(mvs[i])) {
 			val = -Quies(board, -Beta, -Alpha);
 			if (val > val_best) {
 				if (val >= Beta)
@@ -98,44 +107,44 @@ int Quies(Board& board, int Alpha, int Beta) {
 }
 
 /*******************
-é™åˆ¶å®½åº¦çš„æ·±åº¦ä¼˜å…ˆæœç´¢ï¼ˆè¿­ä»£æ·±åº¦ä¼˜å…ˆæœç´¢çš„ä¸€æ­¥ï¼‰ç”¨alpha-betaç®—æ³•å®ç°
-æ ¹æ®searchInfoä¸­mvs.mvsä¸­å­˜å‚¨çš„æ‰€æœ‰èµ°æ³•åŠé¡ºåºï¼Œ
-beta:æœ¬å±‚èŠ‚ç‚¹æœ€å°å€¼ alpha:ä¸Šä¸€å±‚èŠ‚ç‚¹å€¼
-æ•£åˆ—é¡¹é‡Œåˆ°åº•è¦ä¿å­˜ä»€ä¹ˆå€¼ï¼Œå¹¶ä¸”å½“ä½ è¦è·å–å®ƒæ—¶æ€æ ·æ¥åšã€‚
-ç­”æ¡ˆæ˜¯å‚¨å­˜ä¸€ä¸ªå€¼ï¼Œå¦åŠ ä¸€ä¸ªæ ‡å¿—æ¥è¯´æ˜è¿™ä¸ªå€¼æ˜¯ä»€ä¹ˆå«ä¹‰ã€‚
+ÏŞÖÆ¿í¶ÈµÄÉî¶ÈÓÅÏÈËÑË÷£¨µü´úÉî¶ÈÓÅÏÈËÑË÷µÄÒ»²½£©ÓÃalpha-betaËã·¨ÊµÏÖ
+¸ù¾İsearchInfoÖĞmvs.mvsÖĞ´æ´¢µÄËùÓĞ×ß·¨¼°Ë³Ğò£¬
+beta:±¾²ã½Úµã×îĞ¡Öµ alpha:ÉÏÒ»²ã½ÚµãÖµ
+É¢ÁĞÏîÀïµ½µ×Òª±£´æÊ²Ã´Öµ£¬²¢ÇÒµ±ÄãÒª»ñÈ¡ËüÊ±ÔõÑùÀ´×ö¡£
+´ğ°¸ÊÇ´¢´æÒ»¸öÖµ£¬Áí¼ÓÒ»¸ö±êÖ¾À´ËµÃ÷Õâ¸öÖµÊÇÊ²Ã´º¬Òå¡£
 **********************/
 static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 {
 	pv_num++;
 	int vl, vlBest, nHashFlag;
-	int newDepth, CurTime;
+	int newDepth;
 	uint16_t mvBest, mvHash, mv;
 	MoveSortStruct MoveSort;
-	// 1. åœ¨å¶å­ç»“ç‚¹å¤„è°ƒç”¨é™æ€æœç´¢ï¼›
+	// 1. ÔÚÒ¶×Ó½áµã´¦µ÷ÓÃ¾²Ì¬ËÑË÷£»
 	if (depth <= 0)
 		//return searchInfo.board.valueRed - searchInfo.board.valueBlack;
 		return Quies(searchInfo.board, alpha, beta);
 	//return Evaluate(searchInfo.board);
 
-		// 4. è¾¾åˆ°æé™æ·±åº¦ï¼Œç›´æ¥è¿”å›è¯„ä»·å€¼ï¼›
+		// 4. ´ïµ½¼«ÏŞÉî¶È£¬Ö±½Ó·µ»ØÆÀ¼ÛÖµ£»
 	if (searchInfo.board.distance == LIMIT_DEPTH) {
 		return searchInfo.board.Evaluate();
 	}
 
-	// 2. é‡å¤è£å‰ªï¼›
+	// 2. ÖØ¸´²Ã¼ô£»
 	vl = prune(searchInfo.board);
-	if (vl > -MATE_VALUE) {//-MATE_VALUEæ˜¯é‡å¤çš„ç‰¹å®šè¿”å›å€¼
+	if (vl > -MATE_VALUE) {//-MATE_VALUEÊÇÖØ¸´µÄÌØ¶¨·µ»ØÖµ
 		return vl;
 	}
-	// 3. ç½®æ¢è£å‰ªï¼›å¦‚æœè¯¥æœç´¢èŠ‚ç‚¹åœ¨ç½®æ¢è¡¨ä¸­å‡ºç°
+	// 3. ÖÃ»»²Ã¼ô£»Èç¹û¸ÃËÑË÷½ÚµãÔÚÖÃ»»±íÖĞ³öÏÖ
 	vl = probeHash(searchInfo.board, depth, alpha, beta, mvHash);
 	if (searchInfo.bUseHash && vl > -MATE_VALUE) {
-		// ç”±äºPVç»“ç‚¹ä¸é€‚ç”¨ç½®æ¢è£å‰ªï¼Œæ‰€ä»¥ä¸ä¼šå‘ç”ŸPVè·¯çº¿ä¸­æ–­çš„æƒ…å†µ
+		// ÓÉÓÚPV½áµã²»ÊÊÓÃÖÃ»»²Ã¼ô£¬ËùÒÔ²»»á·¢ÉúPVÂ·ÏßÖĞ¶ÏµÄÇé¿ö
 		return vl;
 	}
-	
 
-	// 5. å°è¯•ç©ºç€è£å‰ªï¼›
+
+	// 5. ³¢ÊÔ¿Õ×Å²Ã¼ô£»
 	if (bNoNull && !searchInfo.board.lastCheck()) { //&& !searchInfo.board.isChecked() && searchInfo.board.nullOkay()) {
 		searchInfo.board.nullMove();
 		vl = -SearchPV(depth - NULL_DEPTH - 1, -beta, 1 - beta, NO_NULL);
@@ -148,27 +157,26 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	if (0&&searchInfo.bDebug)
 	{
 		char result[4];
-		MOVE_COORD(searchInfo.nHistoryTable[searchInfo.board.distance], result);//å°†ç»“æœè½¬åŒ–ä¸ºå¯è¾“å‡ºå­—ç¬¦ä¸² int->char*
+		MOVE_COORD(searchInfo.nHistoryTable[searchInfo.board.distance], result);//½«½á¹û×ª»¯Îª¿ÉÊä³ö×Ö·û´® int->char*
 		printf("*PVmax_depth: %d depth: %d move %.4s\n", max_depth, depth, (const char*)&result);
 		//printf("%d\n",searchInfo.mvResult);
 		fflush(stdout);
 	}
-	// 6. åˆå§‹åŒ–ï¼›
+	// 6. ³õÊ¼»¯£»
 	mvBest = 0;
 	nHashFlag = HASH_ALPHA;
 	vlBest = -MATE_VALUE;
 	MoveSort.Init(mvHash);
-	while ((mv = MoveSort.Next()) != 0) {/////////////////////ç¬¬äºŒå±‚genMoveåé¢å¤§é‡é‡å¤çš„åŒä¸€æ­¥ï¼Œçœ‹çœ‹æ€ä¹ˆå›äº‹
-		CurTime = (int)(GetTime() - searchInfo.llTime);
-		if (CurTime > searchInfo.nMaxTimer) {
-			searchInfo.bStop = true;
+	while ((mv = MoveSort.Next()) != 0) {/////////////////////µÚ¶ş²ãgenMoveºóÃæ´óÁ¿ÖØ¸´µÄÍ¬Ò»²½£¬¿´¿´ÔõÃ´»ØÊÂ
+		checkTime();
+		if (searchInfo.bStop == true) {
 			return mvBest;
 		}
 		if (searchInfo.board.makeMove(mv))
 		{
-			
+
 			/*
-			//è‹¥è¢«å°†å†›åˆ™ä¸å°è¯•
+			//Èô±»½«¾üÔò²»³¢ÊÔ
 			if (searchInfo.board.isChecked(searchInfo.board.player))
 			{
 				searchInfo.board.undoMakeMove();
@@ -178,16 +186,16 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			//int value = -SearchPV(depth - 1, -beta, -alpha);
 			newDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
 			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(newDepth ,-beta, -alpha);/////////////////repstatusé‚£å„¿æœ‰é—®é¢˜ï¼Œè€æ˜¯è¿”å›-20å¹³å±€ï¼
+				vl = -SearchPV(newDepth, -beta, -alpha);/////////////////repstatusÄÇ¶ùÓĞÎÊÌâ£¬ÀÏÊÇ·µ»Ø-20Æ½¾Ö£¡
 			}
 			else {
-				vl = -SearchPV(newDepth ,-alpha - 1, -alpha);
-				if (vl > alpha&& vl < beta) {
-					vl = -SearchPV(newDepth ,-beta, -alpha);
+				vl = -SearchPV(newDepth, -alpha - 1, -alpha);
+				if (vl > alpha && vl < beta) {
+					vl = -SearchPV(newDepth, -beta, -alpha);
 				}
 			}
 			searchInfo.board.undoMakeMove();
-				
+
 			if (vl > vlBest)
 			{
 				vlBest = vl;
@@ -206,12 +214,12 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 			}
 		}
 
-		
+
 	}
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
-	// 11. æ›´æ–°ç½®æ¢è¡¨ã€å†å²è¡¨å’Œæ€æ‰‹ç€æ³•è¡¨ã€‚
-	if (vlBest == -MATE_VALUE) {////////////////////////æœ€åè¿”å›çš„æ€æ£‹æ¥è‡ªè¿™å„¿ï¼Œä¸€ç›´æ²¡æ›´æ–°è¿‡vlBest
+	// 11. ¸üĞÂÖÃ»»±í¡¢ÀúÊ·±íºÍÉ±ÊÖ×Å·¨±í¡£
+	if (vlBest == -MATE_VALUE) {////////////////////////×îºó·µ»ØµÄÉ±ÆåÀ´×ÔÕâ¶ù£¬Ò»Ö±Ã»¸üĞÂ¹ıvlBest
 		return searchInfo.board.distance - MATE_VALUE;
 	}
 	else {
@@ -224,63 +232,61 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	return alpha;
 }
 int SearchRoot(int depth) {
-	int newDepth, vlBest, vl, mv, CurTime;
-	// æ ¹ç»“ç‚¹æœç´¢ä¾‹ç¨‹åŒ…æ‹¬ä»¥ä¸‹å‡ ä¸ªæ­¥éª¤ï¼š
-	// 1. åˆå§‹åŒ–
+	int newDepth, vlBest, vl, mv;
+	// ¸ù½áµãËÑË÷Àı³Ì°üÀ¨ÒÔÏÂ¼¸¸ö²½Öè£º
+	// 1. ³õÊ¼»¯
 	vlBest = -MATE_VALUE;
 	mvs.Init(searchInfo.mvResult);
-	// 2. é€ä¸€æœç´¢æ¯ä¸ªç€æ³•
+	// 2. ÖğÒ»ËÑË÷Ã¿¸ö×Å·¨
 	while ((mv = mvs.Next()) != 0) {
+		checkTime();
+		if (searchInfo.bStop == true) {
+			if (searchInfo.bDebug)
+				cout << "Time Out search depth = " << max_depth << endl;
+			break;
+		}
 		if (searchInfo.board.makeMove(mv))
 		{
-			if (searchInfo.bDebug)
+			if (0&&searchInfo.bDebug)
 			{
 				char result[4];
-				MOVE_COORD(mv, result);//å°†ç»“æœè½¬åŒ–ä¸ºå¯è¾“å‡ºå­—ç¬¦ä¸² int->char*
+				MOVE_COORD(mv, result);//½«½á¹û×ª»¯Îª¿ÉÊä³ö×Ö·û´® int->char*
 				printf("ROOT max_depth: %d depth: %d move %.4s\n", max_depth, max_depth - depth, (const char*)&result);
 				//printf("%d\n",searchInfo.mvResult);
 				fflush(stdout);
 			}
 			/*
-			//è‹¥è¢«å°†å†›åˆ™ä¸å°è¯•
+			//Èô±»½«¾üÔò²»³¢ÊÔ
 			if (searchInfo.board.isChecked(searchInfo.board.player))
 			{
 				searchInfo.board.undoMakeMove();
 				continue;
 			}
 			*/
-			// 3. å°è¯•é€‰æ‹©æ€§å»¶ä¼¸(åªè€ƒè™‘å°†å†›å»¶ä¼¸)
+			// 3. ³¢ÊÔÑ¡ÔñĞÔÑÓÉì(Ö»¿¼ÂÇ½«¾üÑÓÉì)
 			newDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
-			// 4. ä¸»è¦å˜ä¾‹æœç´¢
+			// 4. Ö÷Òª±äÀıËÑË÷
 			if (vlBest == -MATE_VALUE) {
 				vl = -SearchPV(newDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
 			}
 			else {
 				vl = -SearchPV(newDepth, -vlBest - 1, -vlBest);
-				if (vl > vlBest) { // è¿™é‡Œä¸éœ€è¦" && vl < MATE_VALUE"äº†
+				if (vl > vlBest) { // ÕâÀï²»ĞèÒª" && vl < MATE_VALUE"ÁË
 					vl = -SearchPV(newDepth, -MATE_VALUE, -vlBest, NO_NULL);
 				}
 			}
 			searchInfo.board.undoMakeMove();
-			if (searchInfo.bStop) {
-				return vlBest;
-			}
-			// 5. Alpha-Betaè¾¹ç•Œåˆ¤å®š("vlBest"ä»£æ›¿äº†"SearchPV()"ä¸­çš„"vlAlpha")
+			// 5. Alpha-Beta±ß½çÅĞ¶¨("vlBest"´úÌæÁË"SearchPV()"ÖĞµÄ"vlAlpha")
 			if (vl > vlBest) {
-				// 6. å¦‚æœæœç´¢åˆ°ç¬¬ä¸€ç€æ³•ï¼Œé‚£ä¹ˆ"æœªæ”¹å˜æœ€ä½³ç€æ³•"çš„è®¡æ•°å™¨åŠ 1ï¼Œå¦åˆ™æ¸…é›¶
-				searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
+
 				vlBest = vl;
-				// 7. æœç´¢åˆ°æœ€ä½³ç€æ³•æ—¶è®°å½•ä¸»è¦å˜ä¾‹
+				// 7. ËÑË÷µ½×î¼Ñ×Å·¨Ê±¼ÇÂ¼Ö÷Òª±äÀı
 				searchInfo.mvResult = mv;
 			}
 
 		}
-		CurTime = (int)(GetTime() - searchInfo.llTime);
-		if (CurTime > searchInfo.nMaxTimer) {
-			searchInfo.bStop = true;
-			if (searchInfo.bDebug)
-				cout << "Time Out search depth = " << max_depth<<endl;
-		}
+		// 6. Èç¹ûËÑË÷µ½µÚÒ»×Å·¨£¬ÄÇÃ´"Î´¸Ä±ä×î¼Ñ×Å·¨"µÄ¼ÆÊıÆ÷¼Ó1£¬·ñÔòÇåÁã
+				//searchInfo.nUnchanged = (vlBest == -MATE_VALUE ? searchInfo.nUnchanged + 1 : 0);
 	}
 	/*printf("%d SSSSSSSSSSSSSSSSSSS:afer search\n",depth);
 	fflush(stdout);
@@ -289,9 +295,58 @@ int SearchRoot(int depth) {
 	searchInfo.SetBestMove(searchInfo.mvResult, depth, searchInfo.wmvKiller[searchInfo.board.distance]);
 	return vlBest;
 }
+/*SearchMainÓÃµ½µÄ³õÊ¼»¯º¯Êı*/
+void Initial() {
+	// ³õÊ¼»¯Ê±¼äºÍ¼ÆÊıÆ÷
+	searchInfo.bStop = false;
+	//searchInfo.nUnchanged = 0;
+	searchInfo.mvResult = 0;
+	searchInfo.ClearKiller(searchInfo.wmvKiller);
+	searchInfo.ClearHistory();
+	memset(HashTable, 0, sizeof(HashTable));
+	// ÓÉÓÚ ClearHash() ĞèÒªÏûºÄÒ»¶¨Ê±¼ä£¬ËùÒÔ¼ÆÊ±´ÓÕâÒÔºó¿ªÊ¼±È½ÏºÏÀí
+	searchInfo.llTime = GetTime();
+}
+/*SearchMainÓÃµ½µÄ¿ª¾Ö¿âº¯Êı£¬·µ»ØÊÇ·ñÕÒµ½×Å·¨*/
+int TryBookMv() {
+	int i, vl, mvs;
+	BookStruct bks[MAX_GEN_MVS];
+	// a. »ñÈ¡¿ª¾Ö¿âÖĞµÄËùÓĞ×ß·¨
+	mvs = GetBookMoves(searchInfo.board, bks);
+	if (mvs > 0) {
+		vl = 0;
+		for (i = 0; i < mvs; i++) {
+			vl += bks[i].wvl;
+		}
+		// b. ¸ù¾İÈ¨ÖØËæ»úÑ¡ÔñÒ»¸ö×ß·¨
+		vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
+		for (i = 0; i < mvs; i++) {
+			vl -= bks[i].wvl;
+			if (vl < 0) {
+				break;
+			}
+		}
+		// c. Èç¹û¿ª¾Ö¿âÖĞµÄ×Å·¨¹¹³ÉÑ­»·¾ÖÃæ£¬ÄÇÃ´²»×ßÕâ¸ö×Å·¨
+		searchInfo.board.makeMove(bks[i].wmv);
+		if (searchInfo.board.RepStatus(3) == 0) {
+			searchInfo.mvResult = bks[i].wmv;
+			searchInfo.board.undoMakeMove();
+			char result[4];
+			MOVE_COORD(searchInfo.mvResult, result);//½«½á¹û×ª»¯Îª¿ÉÊä³ö×Ö·û´® int->char*
+			printf("bestmove %.4s\n", (const char*)&result);
+			fflush(stdout);
+			if (searchInfo.bDebug)
+				searchInfo.board.drawBoard();
+			return 1;
+		}
+		searchInfo.board.undoMakeMove();
+	}
+	return 0;
+}
+
 /***********************
-ä¸»æœç´¢å‡½æ•°
-æ€è·¯ï¼šè¿­ä»£åŠ æ·±æœç´¢:ä¸»è¦æ·±åº¦ä¼˜å…ˆéå†ï¼Œåˆ©ç”¨å·²çŸ¥ç»“æœ
+Ö÷ËÑË÷º¯Êı
+Ë¼Â·£ºµü´ú¼ÓÉîËÑË÷:Ö÷ÒªÉî¶ÈÓÅÏÈ±éÀú£¬ÀûÓÃÒÑÖª½á¹û
 ************************/
 void SearchMain(int dep)
 {
@@ -300,138 +355,97 @@ void SearchMain(int dep)
 	//{
 	//	SearchRoot(i);
 
-	//	// æœç´¢åˆ°æ€æ£‹åˆ™ç»ˆæ­¢æœç´¢
+	//	// ËÑË÷µ½É±ÆåÔòÖÕÖ¹ËÑË÷
 	//	if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE) {
 	//		break;
 	//	}
 	//}
 	int i, vl, vlLast;
-	int CurTime, nLimitTimer;
-	int nBookMoves;
-	BookStruct bks[MAX_GEN_MVS];
-	// ä¸»æœç´¢ä¾‹ç¨‹åŒ…æ‹¬ä»¥ä¸‹å‡ ä¸ªæ­¥éª¤ï¼š
+	int CurTime;
 
+	// Ö÷ËÑË÷Àı³Ì°üÀ¨ÒÔÏÂ¼¸¸ö²½Öè£º
 
-// 2. ä»å¼€å±€åº“ä¸­æœç´¢ç€æ³•
-	if (searchInfo.bUseBook) {
-		// a. è·å–å¼€å±€åº“ä¸­çš„æ‰€æœ‰èµ°æ³•
-		nBookMoves = GetBookMoves(searchInfo.board, bks);
-		if (nBookMoves > 0) {
-			vl = 0;
-			for (i = 0; i < nBookMoves; i++) {
-				vl += bks[i].wvl;
-			}
-			// b. æ ¹æ®æƒé‡éšæœºé€‰æ‹©ä¸€ä¸ªèµ°æ³•
-			vl = searchInfo.rc4Random.NextLong() % (uint32_t)vl;
-			for (i = 0; i < nBookMoves; i++) {
-				vl -= bks[i].wvl;
-				if (vl < 0) {
-					break;
-				}
-			}
-			// c. å¦‚æœå¼€å±€åº“ä¸­çš„ç€æ³•æ„æˆå¾ªç¯å±€é¢ï¼Œé‚£ä¹ˆä¸èµ°è¿™ä¸ªç€æ³•
-			searchInfo.board.makeMove(bks[i].wmv);
-			if (searchInfo.board.RepStatus(3) == 0) {
-				searchInfo.mvResult = bks[i].wmv;
-				searchInfo.board.undoMakeMove();
-				char result[4];
-				MOVE_COORD(searchInfo.mvResult, result);//å°†ç»“æœè½¬åŒ–ä¸ºå¯è¾“å‡ºå­—ç¬¦ä¸² int->char*
-				printf("bestmove %.4s\n", (const char*)&result);
-				fflush(stdout);
-				if (searchInfo.bDebug)
-					searchInfo.board.drawBoard();
+	// 2. ´Ó¿ª¾Ö¿âÖĞËÑË÷×Å·¨
+		if (searchInfo.bUseBook) {
+			if (TryBookMv())
 				return;
-			}
-			searchInfo.board.undoMakeMove();
 		}
-	}
 
-	// 3. å¦‚æœæ·±åº¦ä¸ºé›¶åˆ™è¿”å›é™æ€æœç´¢å€¼
-	if (dep == 0) {
-		vl = Quies(searchInfo.board, -MATE_VALUE, MATE_VALUE);
-		//		vl = Evaluate(searchInfo.board);
-		if (searchInfo.bDebug) {
-			printf("info depth 0 score %d\n", vl);
-			fflush(stdout);
-		}
-		return;
-	}
-
-	// 4. åˆå§‹åŒ–æ—¶é—´å’Œè®¡æ•°å™¨
-	searchInfo.bStop = false;
-	searchInfo.nUnchanged = 0;
-	searchInfo.mvResult = 0;
-	searchInfo.ClearKiller(searchInfo.wmvKiller);
-	searchInfo.ClearHistory();
-	memset(HashTable, 0, sizeof(HashTable));
-	// ç”±äº ClearHash() éœ€è¦æ¶ˆè€—ä¸€å®šæ—¶é—´ï¼Œæ‰€ä»¥è®¡æ—¶ä»è¿™ä»¥åå¼€å§‹æ¯”è¾ƒåˆç†
-	searchInfo.llTime = GetTime();
+		// 4.³õÊ¼»¯Ê±¼äºÍ¼ÆÊıÆ÷
+	Initial();
 	vlLast = 0;
 	CurTime = 0;
 
-	// 5. åšè¿­ä»£åŠ æ·±æœç´¢
+	// 5. ×öµü´ú¼ÓÉîËÑË÷
 	for (i = 1; i <= dep; i++)
 	{
 		max_depth = i;
 		pv_num = quies_num = 0;
-		// 6. æœç´¢æ ¹ç»“ç‚¹
+		// 6. ËÑË÷¸ù½áµã
 		vl = SearchRoot(i);
 		if (searchInfo.bStop) {
 			if (vl > -MATE_VALUE) {
-				vlLast = vl; // è·³å‡ºåï¼ŒvlLastä¼šç”¨æ¥åˆ¤æ–­è®¤è¾“æˆ–æŠ•é™ï¼Œæ‰€ä»¥éœ€è¦ç»™å®šæœ€è¿‘ä¸€ä¸ªå€¼
+				vlLast = vl; // Ìø³öºó£¬vlLast»áÓÃÀ´ÅĞ¶ÏÈÏÊä»òÍ¶½µ£¬ËùÒÔĞèÒª¸ø¶¨×î½üÒ»¸öÖµ
 			}
-			break; // æ²¡æœ‰è·³å‡ºï¼Œåˆ™"vl"æ˜¯å¯é å€¼
+			break; // Ã»ÓĞÌø³ö£¬Ôò"vl"ÊÇ¿É¿¿Öµ
 		}
 		if (searchInfo.bDebug) {
 			printf("info depth %d mv %d score %d\n", i, searchInfo.mvResult, vl);
 			fflush(stdout);
 		}
+
+		checkTime();
+		if (searchInfo.bStop) {
+			vlLast = vl;
+			break; // ²»¹ÜÊÇ·ñÌø³ö£¬"vlLast"¶¼ÒÑ¸üĞÂ
+		}
+#if 0
 		CurTime = (int)(GetTime() - searchInfo.llTime);
-		// 7. å¦‚æœæœç´¢æ—¶é—´è¶…è¿‡é€‚å½“æ—¶é™ï¼Œåˆ™ç»ˆæ­¢æœç´¢
+		// 7. Èç¹ûËÑË÷Ê±¼ä³¬¹ıÊÊµ±Ê±ÏŞ£¬ÔòÖÕÖ¹ËÑË÷
 		nLimitTimer = searchInfo.nMaxTimer;
-		// a. å¦‚æœå½“å‰æœç´¢å€¼æ²¡æœ‰è½åå‰ä¸€å±‚å¾ˆå¤šï¼Œé‚£ä¹ˆé€‚å½“æ—¶é™å‡åŠ
+		// a. Èç¹ûµ±Ç°ËÑË÷ÖµÃ»ÓĞÂäºóÇ°Ò»²ãºÜ¶à£¬ÄÇÃ´ÊÊµ±Ê±ÏŞ¼õ°ë
 		nLimitTimer = (vl + DROPDOWN_VALUE >= vlLast ? nLimitTimer / 2 : nLimitTimer);
-		// b. å¦‚æœæœ€ä½³ç€æ³•è¿ç»­å¤šå±‚æ²¡æœ‰å˜åŒ–ï¼Œé‚£ä¹ˆé€‚å½“æ—¶é™å‡åŠ
+		// b. Èç¹û×î¼Ñ×Å·¨Á¬Ğø¶à²ãÃ»ÓĞ±ä»¯£¬ÄÇÃ´ÊÊµ±Ê±ÏŞ¼õ°ë
 		nLimitTimer = (searchInfo.nUnchanged >= UNCHANGED_DEPTH ? nLimitTimer / 2 : nLimitTimer);
 		if (CurTime > nLimitTimer) {
 			vlLast = vl;
-			break; // ä¸ç®¡æ˜¯å¦è·³å‡ºï¼Œ"vlLast"éƒ½å·²æ›´æ–°
+			break; // ²»¹ÜÊÇ·ñÌø³ö£¬"vlLast"¶¼ÒÑ¸üĞÂ
 		}
+#endif
 
 		vlLast = vl;
 
-		// 8. æœç´¢åˆ°æ€æ£‹åˆ™ç»ˆæ­¢æœç´¢
+		// 8. ËÑË÷µ½É±ÆåÔòÖÕÖ¹ËÑË÷
 		if (vlLast > WIN_VALUE || vlLast < -WIN_VALUE)
 		{
 			break;
 		}
 
 	}
-	//å®Œæˆè¿­ä»£åŠ æ·±æœç´¢ï¼Œè·å¾—ç»“æœ
+	//Íê³Éµü´ú¼ÓÉîËÑË÷£¬»ñµÃ½á¹û
 	//searchInfo.board.drawBoard();
 	/*printf("SSSSSSSSSSSSSSSSSSS:after\n");
 	fflush(stdout);
 	searchInfo.board.drawBoard();*/
-	if (0&&searchInfo.bDebug)
-	{
-		cout << "beforemove" << endl;
-		searchInfo.board.drawBoard();
-	}
 	searchInfo.board.makeMove(searchInfo.mvResult);
 	char result[4];
-	MOVE_COORD(searchInfo.mvResult, result);//å°†ç»“æœè½¬åŒ–ä¸ºå¯è¾“å‡ºå­—ç¬¦ä¸² int->char*
+	MOVE_COORD(searchInfo.mvResult, result);//½«½á¹û×ª»¯Îª¿ÉÊä³ö×Ö·û´® int->char*
 	printf("bestmove %.4s\n", (const char*)&result);
-	if(searchInfo.bDebug)
-		cout << "PV_NUM= "<< pv_num <<", QUIES_NUM= " <<quies_num<<endl;
-		//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
+	if (searchInfo.bDebug)
+		cout << "PV_NUM= " << pv_num << ", QUIES_NUM= " << quies_num << endl;
+	//printf("%d,%d,%d\n",searchInfo.mvResult,i,searchInfo.bStop);
 	fflush(stdout);
-	if (0&&searchInfo.bDebug)
+	if (searchInfo.bDebug)
 	{
-		cout << "aftermove" << endl;
 		searchInfo.board.drawBoard();
 	}
 }
-
+/*
+ucci
+isready
+position startpos moves b2e2 b9c7 b0c2 a9b9 a0b0 h9g7 g3g4 c6c5 b0b6 b7a7 b6c6 a7a8 h0g2 f9e8 h2i2 i9h9 i0h0 a8c8 c6d6 c7b5 d6d8 c8c3 c0a2 h7h3 e3e4 c5c4 a2c4 c3g3
+go time 60 movestogo 985 opptime 60 oppmovestogo 985
+*/
 /*
 position fen 1n1k1abnr/9/1c5c1/8p/9/p8/P5p1P/BC3CN1R/2p6/1p1AK4 w - - 0 28 moves
 go time 60000
