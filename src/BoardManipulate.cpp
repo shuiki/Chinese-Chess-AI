@@ -320,24 +320,24 @@ void Board::clearBoard()
 }
 
 int Board::RepStatus(int limit) const {
-	bool selfSide, bPerpCheck, bOppPerpCheck;
+	bool selfSide, perpCheck, oppPerpCheck;
 	const MoveStruct* tMv;
 
 	selfSide = false;
-	bPerpCheck = bOppPerpCheck = true;	// 长将标记
+	perpCheck = oppPerpCheck = true;	// 长将标记
 	tMv = pastMoves + pastMoveNum - 1;	// 指向历史表中最后节点
 	while (tMv->move != 0 && tMv->captured == 0) {
 		if (selfSide) {
-			bPerpCheck = bPerpCheck && tMv->checked;
+			perpCheck = perpCheck && tMv->checked;
 			if (tMv->zobr.key == zobr.key) {
 				limit--;
 				if (limit == 0) {
-					return 1 + (bPerpCheck ? 2 : 0) + (bOppPerpCheck ? 4 : 0);
+					return 1 + (perpCheck ? 2 : 0) + (oppPerpCheck ? 4 : 0);
 				}
 			}
 		}
 		else {
-			bOppPerpCheck = bOppPerpCheck && tMv->checked;
+			oppPerpCheck = oppPerpCheck && tMv->checked;
 		}
 		selfSide = !selfSide;
 		tMv--;
@@ -551,9 +551,9 @@ int_32 RC4::NextLong(void) {
 
 inline const char* PIECE_BYTE_IN_CHINESE(int pt, bool type) {
 	if (type == true)
-		return cszPieceBytesInChineseRed[pt];
+		return PieceBytesInChineseRed[pt];
 	else
-		return cszPieceBytesInChineseBlack[pt];
+		return PieceBytesInChineseBlack[pt];
 }
 
 void Board::drawBoard()

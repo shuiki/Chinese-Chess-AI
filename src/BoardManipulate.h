@@ -12,8 +12,8 @@ typedef unsigned char int_8;//用来表示棋子、位置
 typedef unsigned int int_32;//用来表示校验码等
 typedef unsigned short int_16;//用来表示move（起点+终点）
 
-const char* const cszPieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
-const char* const cszPieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
+const char* const PieceBytesInChineseBlack[7] = { "将","士","象","碼","車","砲","卒" };
+const char* const PieceBytesInChineseRed[7] = { "帅","仕","相","马","车","炮","兵" };
 
 enum Player { BLACK, RED, NUL };
 
@@ -25,8 +25,8 @@ const int DRAW_VALUE = 20;              // 和棋时返回的分数(取负值)
 ///////////////////
 
 /////暂取
-const int MATE_VALUE = 10000;           // 最高分值，即将死的分值
-const int WIN_VALUE = MATE_VALUE - 100; // 搜索出胜负的分值界限，超出此值就说明已经搜索出杀棋了
+const int MAX_VALUE = 10000;           // 最高分值，即将死的分值
+const int WIN_VALUE = MAX_VALUE - 100; // 搜索出胜负的分值界限，超出此值就说明已经搜索出杀棋了
 
 
 const int KING_TYPE = 0;
@@ -247,8 +247,8 @@ public:
 
 	int RepValue(int nRepStatus) const {        // 重复局面分值
 		int vlReturn;
-		vlReturn = ((nRepStatus & 2) == 0 ? 0 : distance - MATE_VALUE) +
-			((nRepStatus & 4) == 0 ? 0 : MATE_VALUE - distance);
+		vlReturn = ((nRepStatus & 2) == 0 ? 0 : distance - MAX_VALUE) +
+			((nRepStatus & 4) == 0 ? 0 : MAX_VALUE - distance);
 		return vlReturn == 0 ? DrawValue() : vlReturn;
 	}
 	void drawBoard();

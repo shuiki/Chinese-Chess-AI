@@ -45,12 +45,12 @@ inline int probeHash(const Board& board, int depth, int alpha, int beta, int_16&
 	if (ht.bestmv == 0)
 	{
 		mv = 0;
-		return -MATE_VALUE;
+		return -MAX_VALUE;
 	}
 	if (ht.lock_1 != board.zobr.lock_1 || ht.lock_2 != board.zobr.lock_2)
 	{
 		mv = 0;
-		return -MATE_VALUE;
+		return -MAX_VALUE;
 	}
 	int res = ht.val;
 	mv = ht.bestmv;
@@ -69,15 +69,15 @@ inline int probeHash(const Board& board, int depth, int alpha, int beta, int_16&
 	{
 		if (ht.flag == HASH_ALPHA)
 		{
-			return res <= alpha ? res : -MATE_VALUE;
+			return res <= alpha ? res : -MAX_VALUE;
 		}
 		if (ht.flag == HASH_BETA)
 		{
-			return res >= beta ? res : -MATE_VALUE;
+			return res >= beta ? res : -MAX_VALUE;
 		}
 		return res;
 	}
-	return -MATE_VALUE;
+	return -MAX_VALUE;
 }
 
 #endif // !HASH_H

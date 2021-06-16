@@ -17,7 +17,7 @@ int prune(const Board& pos) {
 		return pos.RepValue(vlRep);
 	}
 	//不存在重复局面
-	return -MATE_VALUE;
+	return -MAX_VALUE;
 }
 
 
@@ -57,12 +57,12 @@ int Quies(Board& board, int Alpha, int Beta) {
 	checkTime();
 	if (searchInfo.bStop)
 		return board.Evaluate();
-	int val, Move_num = 0, val_best = -MATE_VALUE;
+	int val, Move_num = 0, val_best = -MAX_VALUE;
 	int_16 mvs[MAX_GEN_MVS];
 
 	// 重复裁剪；有重复局面直接返回估值
 	val = prune(board);
-	if (val > -MATE_VALUE) {
+	if (val > -MAX_VALUE) {
 		return val;
 	}
 	if (val > Alpha)
@@ -101,7 +101,7 @@ int Quies(Board& board, int Alpha, int Beta) {
 		}
 	}
 
-	return (val_best == -MATE_VALUE) ? board.distance - MATE_VALUE : val_best;
+	return (val_best == -MAX_VALUE) ? board.distance - MAX_VALUE : val_best;
 }
 
 /*******************
@@ -118,7 +118,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	int newDepth;
 	uint16_t mvBest, mvHash, mv;
 	MoveSortStruct MoveSort;
-	// 1. 在叶子结点处调用静态搜索；
+	// 在叶子结点处调用静态搜索；
 	if (depth <= 0)
 		//return searchInfo.board.valueRed - searchInfo.board.valueBlack;
 		return Quies(searchInfo.board, alpha, beta);
@@ -131,12 +131,12 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 
 	// 去重
 	vl = prune(searchInfo.board);
-	if (vl > -MATE_VALUE) {//-MATE_VALUE是重复的特定返回值
+	if (vl > -MAX_VALUE) {//-MAX_VALUE是重复的特定返回值
 		return vl;
 	}
 	// 哈希置换表查找
 	vl = probeHash(searchInfo.board, depth, alpha, beta, mvHash);
-	if (searchInfo.bUseHash && vl > -MATE_VALUE) {
+	if (searchInfo.bUseHash && vl > -MAX_VALUE) {
 		return vl;
 	}
 
@@ -162,7 +162,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	// 初始化；
 	mvBest = 0;
 	nHashFlag = HASH_ALPHA;
-	vlBest = -MATE_VALUE;
+	vlBest = -MAX_VALUE;
 	MoveSort.Init(mvHash);
 	while ((mv = MoveSort.Next()) != 0) {/////////////////////第二层genMove后面大量重复的同一步，看看怎么回事
 		checkTime();
@@ -173,7 +173,7 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 		{
 
 			newDepth = (searchInfo.board.lastCheck() ? depth : depth - 1);
-			if (vlBest == -MATE_VALUE) {
+			if (vlBest == -MAX_VALUE) {
 				vl = -SearchPV(newDepth, -beta, -alpha);/////////////////repstatus那儿有问题，老是返回-20平局！
 			}
 			else {
@@ -207,8 +207,8 @@ static int SearchPV(int depth, int alpha, int beta, bool bNoNull = false)
 	//searchInfo.alpha = alpha;
 	//searchInfo.beta = beta;
 	// 更新board
-	if (vlBest == -MATE_VALUE) {////////////////////////最后返回的杀棋来自这儿，一直没更新过vlBest
-		return searchInfo.board.distance - MATE_VALUE;
+	if (vlBest == -MAX_VALUE) {////////////////////////最后返回的杀棋来自这儿，一直没更新过vlBest
+		return searchInfo.board.distance - MAX_VALUE;
 	}
 	else {
 		recordHash(searchInfo.board, nHashFlag, vlBest, depth, mvBest);
@@ -223,7 +223,7 @@ int SearchRoot(int depth) {
 	int newDepth, vlBest, vl, mv;
 	// 根结点搜索例程包括以下几个步骤：
 	// 初始化
-	vlBest = -MATE_VALUE;
+	vlBest = -MAX_VALUE;
 	mvs.Init(searchInfo.mvResult);
 	// 搜索
 	while ((mv = mvs.Next()) != 0) {
@@ -247,13 +247,13 @@ int SearchRoot(int depth) {
 			// 选择延伸
 			newDepth = (searchInfo.board.isChecked(searchInfo.board.player) ? depth : depth - 1);
 
-			if (vlBest == -MATE_VALUE) {
-				vl = -SearchPV(newDepth, -MATE_VALUE, MATE_VALUE, NO_NULL);
+			if (vlBest == -MAX_VALUE) {
+				vl = -SearchPV(newDepth, -MAX_VALUE, MAX_VALUE, NO_NULL);
 			}
 			else {
 				vl = -SearchPV(newDepth, -vlBest - 1, -vlBest);
-				if (vl > vlBest) { // 这里不需要" && vl < MATE_VALUE"了
-					vl = -SearchPV(newDepth, -MATE_VALUE, -vlBest, NO_NULL);
+				if (vl > vlBest) { // 这里不需要" && vl < MAX_VALUE"了
+					vl = -SearchPV(newDepth, -MAX_VALUE, -vlBest, NO_NULL);
 				}
 			}
 			searchInfo.board.undoMakeMove();
@@ -349,7 +349,7 @@ void SearchMain(int dep)
 		pv_num = quies_num = 0;
 		vl = SearchRoot(i);
 		if (searchInfo.bStop) {
-			if (vl > -MATE_VALUE) {
+			if (vl > -MAX_VALUE) {
 				vlLast = vl; // 跳出后，vlLast会用来判断认输或投降，所以需要给定最近一个值
 			}
 			break; // 没有跳出，则"vl"是可靠值

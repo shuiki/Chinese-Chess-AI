@@ -1,4 +1,4 @@
-o#include <cstdio>
+#include <cstdio>
 #include <iostream>
 #include <stdio.h>
 #include <windows.h>
