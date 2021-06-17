@@ -4,8 +4,8 @@
 
 
 
-´Ë¿ª¾Ö¿âÊı¾İÌáÈ¡ÓÚeleeyeµÄBOOK.DAT
-½Ó¿Ú¸ú´¦Àí¸úeleeyeÀàËÆ
+æ­¤å¼€å±€åº“æ•°æ®æå–äºeleeyeçš„BOOK.DAT
+æ¥å£è·Ÿå¤„ç†è·Ÿeleeyeç±»ä¼¼
 
 
 ***************************************************/
@@ -12106,7 +12106,7 @@ const BookStruct book[12090] = {
 {uint32_t(-48222391),uint16_t(42436),uint16_t(1)}
 };
 
-void Read(BookStruct& bk, int nPtr) {
+inline void Read(BookStruct& bk, int nPtr) {
     bk = book[nPtr];
 }
 
@@ -12115,7 +12115,7 @@ inline int BOOK_compare(const BookStruct& bk, const Board& pos) {
 		bk.dwZobristLock >((uint32_t)pos.zobr.lock_2) ? 1 : 0;
 }
 
-// »ñÈ¡¿ª¾Ö¿â×Å·¨
+// è·å–å¼€å±€åº“ç€æ³•
 int GetBookMoves(const Board& pos, BookStruct* lpbks);
 
 const uint8_t mirror_data[256] = {
